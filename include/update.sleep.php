@@ -29,6 +29,7 @@ $wol_options = $_POST['wol_options'] ?? 'g';
 $restart_samba = $_POST['restart_samba'] ?? 'true';
 $force_gigabit = $_POST['force_gigabit'] ?? 'false';
 $dhcp_renewal = $_POST['dhcp_renewal'] ?? 'false';
+$cron_schedule = $_POST['cron_schedule'] ?? '*/5 * * * *';
 
 // Validate input
 if ($idle_time_minutes < 1 || $idle_time_minutes > 1440) {
@@ -37,6 +38,11 @@ if ($idle_time_minutes < 1 || $idle_time_minutes > 1440) {
 
 if ($network_threshold < 0) {
     $network_threshold = 102400;
+}
+
+// Validate cron schedule format (basic validation)
+if (!preg_match('/^[\d\*\/,-]+\s+[\d\*\/,-]+\s+[\d\*\/,-]+\s+[\d\*\/,-]+\s+[\d\*\/,-]+$/', $cron_schedule)) {
+    $cron_schedule = '*/5 * * * *'; // Default fallback
 }
 
 // Sanitize telegram inputs
@@ -62,7 +68,8 @@ $config_content = [
     "wol_options=\"$wol_options\"",
     "restart_samba=\"$restart_samba\"",
     "force_gigabit=\"$force_gigabit\"",
-    "dhcp_renewal=\"$dhcp_renewal\""
+    "dhcp_renewal=\"$dhcp_renewal\"",
+    "cron_schedule=\"$cron_schedule\""
 ];
 
 // Ensure config directory exists
@@ -74,8 +81,8 @@ if (!is_dir($config_dir)) {
 // Write configuration file
 file_put_contents($config_file, implode("\n", $config_content) . "\n");
 
-// Update cron job based on enabled status
-$cron_job = "*/5 * * * * /usr/local/emhttp/plugins/$plugin/scripts/smart_sleep.sh >/dev/null 2>&1";
+// Update cron job based on enabled status and custom schedule
+$cron_job = "$cron_schedule /usr/local/emhttp/plugins/$plugin/scripts/smart_sleep.sh >/dev/null 2>&1";
 
 // Get current crontab
 exec('crontab -l 2>/dev/null', $current_cron, $return_code);

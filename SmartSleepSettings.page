@@ -16,31 +16,63 @@ $cfg = parse_plugin_cfg($plugin);
 
 // Get available disks
 exec("lsblk -d -n -o NAME,TYPE | grep disk | awk '{print \$1}'", $all_disks);
-exec("cat /proc/mdstat | grep -E '^md[0-9]+' | awk '{print \$1}'", $array_info);
+
+// Get array disk information from Unraid
+$array_disks = [];
+$other_disks = [];
+
+// Try to get array disks from Unraid's disk assignments
+if (file_exists('/var/local/emhttp/disks.ini')) {
+    $disks_ini = parse_ini_file('/var/local/emhttp/disks.ini', true);
+    foreach ($disks_ini as $section => $data) {
+        if (isset($data['device']) && isset($data['type'])) {
+            $device = basename($data['device']); // Get just the device name (e.g., sdb)
+            if ($data['type'] === 'Data' || $data['type'] === 'Parity') {
+                $array_disks[] = $device;
+            }
+        }
+    }
+}
+
+// If disks.ini method didn't work, fall back to mdstat parsing
+if (empty($array_disks)) {
+    exec("cat /proc/mdstat | grep -E '^md[0-9]+' | awk '{print \$1}'", $array_info);
+    
+    function is_array_disk($disk, $array_info) {
+        foreach ($array_info as $md) {
+            $details = exec("cat /proc/mdstat | grep -A1 '$md' | tail -1");
+            if (strpos($details, $disk) !== false) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    // Separate array disks from others using mdstat
+    foreach ($all_disks as $disk) {
+        if (is_array_disk($disk, $array_info)) {
+            $array_disks[] = $disk;
+        } else {
+            $other_disks[] = $disk;
+        }
+    }
+} else {
+    // Use the disks.ini results, put remaining disks in other_disks
+    foreach ($all_disks as $disk) {
+        if (!in_array($disk, $array_disks)) {
+            $other_disks[] = $disk;
+        }
+    }
+}
+
+// If still no array disks found, use all disks as potential array disks
+if (empty($array_disks)) {
+    $array_disks = $all_disks;
+    $other_disks = $all_disks; // Show same disks in both lists
+}
 
 // Get network interfaces
 exec("ip link show | grep -E '^[0-9]+:' | awk -F': ' '{print \$2}' | grep -v lo", $network_interfaces);
-
-function is_array_disk($disk, $array_info) {
-    foreach ($array_info as $md) {
-        $details = exec("cat /proc/mdstat | grep -A1 '$md' | tail -1");
-        if (strpos($details, $disk) !== false) {
-            return true;
-        }
-    }
-    return false;
-}
-
-// Separate array disks from others
-$array_disks = [];
-$other_disks = [];
-foreach ($all_disks as $disk) {
-    if (is_array_disk($disk, $array_info)) {
-        $array_disks[] = $disk;
-    } else {
-        $other_disks[] = $disk;
-    }
-}
 ?>
 
 <script>
@@ -86,18 +118,40 @@ function testTelegram(form) {
         return;
     }
     
+    // Show loading message
+    var button = document.querySelector('input[value="Test Telegram"]');
+    var originalValue = button.value;
+    button.value = 'Sending...';
+    button.disabled = true;
+    
     var xhr = new XMLHttpRequest();
-    xhr.open('POST', '/plugins/<?=$plugin?>/include/test_telegram.php', true);
+    xhr.open('POST', '/plugins/smart.sleep.manager/include/test_telegram.php', true);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     xhr.onreadystatechange = function() {
         if (xhr.readyState === 4) {
+            // Reset button
+            button.value = originalValue;
+            button.disabled = false;
+            
             if (xhr.status === 200) {
-                var response = JSON.parse(xhr.responseText);
-                if (response.success) {
-                    alert('✅ Telegram test successful! Message sent.');
-                } else {
-                    alert('❌ Telegram test failed: ' + response.error);
+                try {
+                    var response = JSON.parse(xhr.responseText);
+                    if (response.success) {
+                        alert('✅ Telegram test successful! Message sent.');
+                    } else {
+                        alert('❌ Telegram test failed: ' + response.error);
+                    }
+                } catch (e) {
+                    alert('❌ Telegram test failed: Invalid response from server');
                 }
+            } else {
+                alert('❌ Network error during Telegram test (HTTP ' + xhr.status + ')');
+            }
+        }
+    };
+    xhr.send('bot_token=' + encodeURIComponent(form.telegram_bot_token.value) + 
+             '&chat_id=' + encodeURIComponent(form.telegram_chat_id.value));
+}
             } else {
                 alert('❌ Network error during Telegram test');
             }
@@ -229,7 +283,7 @@ _(Test Telegram)_:
 
 > Send a test message to verify Telegram configuration.
 
-### Notification Types
+### 🔔 Notification Types
 
 _(Notify on Standby Timer Start)_:
 : <select name="telegram_notify_standby">
@@ -295,9 +349,9 @@ _(Log File Location)_:
 > View the log file to monitor Smart Sleep Manager activity and troubleshoot issues.
 
 _(Cron Schedule)_:
-: Every 5 minutes (`*/5 * * * *`)
+: <input type="text" name="cron_schedule" value="<?=$cfg['cron_schedule']?:'*/5 * * * *'?>" style="width: 150px;" placeholder="*/5 * * * *">
 
-> The automated sleep check runs every 5 minutes via cron job.
+> Cron schedule for automated sleep checks. Default: */5 * * * * (every 5 minutes). Examples: */1 * * * * (every minute), */15 * * * * (every 15 minutes)
 
 &nbsp;
 : <input type="submit" name="#apply" value="Apply"><input type="button" value="Done" onclick="done()">
