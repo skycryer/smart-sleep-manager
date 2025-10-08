@@ -119,6 +119,33 @@ function validateForm(form) {
     return true;
 }
 
+function testSystem() {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', '/plugins/smart.sleep.manager/include/debug_system.php', true);
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4) {
+            console.log('System Debug Status:', xhr.status);
+            console.log('System Debug Response:', xhr.responseText);
+            if (xhr.status === 200) {
+                try {
+                    var response = JSON.parse(xhr.responseText);
+                    if (response.success) {
+                        console.log('Debug Info:', response.debug_info);
+                        alert('✅ System Debug successful!\n\nCheck browser console (F12) for detailed information.\n\nPHP Version: ' + response.debug_info.php_version + '\nPlugin Dir: ' + (response.debug_info.plugin_dir_exists ? 'EXISTS' : 'MISSING'));
+                    } else {
+                        alert('❌ System Debug failed: ' + response.error);
+                    }
+                } catch (e) {
+                    alert('❌ System Debug failed: Invalid JSON\n\nResponse: ' + xhr.responseText.substring(0, 500));
+                }
+            } else {
+                alert('❌ System Debug failed: HTTP ' + xhr.status + '\n\nThis means PHP is not running or the file is not accessible.');
+            }
+        }
+    };
+    xhr.send();
+}
+
 function testPHP() {
     var xhr = new XMLHttpRequest();
     xhr.open('GET', '/plugins/smart.sleep.manager/include/test_basic.php', true);
@@ -309,6 +336,11 @@ _(Chat ID)_:
 : <input type="text" name="telegram_chat_id" value="<?=$cfg['telegram_chat_id']?>" placeholder="Your Chat ID" class="narrow">
 
 > Your Telegram Chat ID. Send a message to your bot, then visit: https://api.telegram.org/botTOKEN/getUpdates
+
+_(System Debug)_:
+: <input type="button" value="System Debug" onclick="testSystem()">
+
+> Comprehensive system analysis to diagnose Unraid issues. Check browser console (F12) for detailed output.
 
 _(Test PHP)_:
 : <input type="button" value="Test PHP" onclick="testPHP()">
