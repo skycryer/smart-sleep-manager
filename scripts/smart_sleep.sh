@@ -1,0 +1,484 @@
+#!/bin/bash
+
+# Smart Sleep Manager - Main Sleep Script
+# Based on sleepy.sh with plugin configuration integration
+# ============================================================================
+
+PLUGIN_NAME="smart.sleep.manager"
+CONFIG_FILE="/boot/config/plugins/$PLUGIN_NAME/$PLUGIN_NAME.cfg"
+LOG_FILE="/tmp/smart-sleep.log"
+ACTIVITY_CHECK_FILE="/tmp/last_activity"
+NETWORK_STATE_FILE="/tmp/network_total"
+
+# Force sleep flag for manual execution
+FORCE_SLEEP=false
+if [[ "$1" == "--force-sleep" ]]; then
+    FORCE_SLEEP=true
+fi
+
+# ============================================================================
+# CONFIGURATION LOADING
+# ============================================================================
+
+load_config() {
+    # Set defaults
+    ENABLED="true"
+    IDLE_TIME_MINUTES=15
+    SLEEP_METHOD="dynamix_s3"
+    ARRAY_DISKS=""
+    IGNORE_DISKS=""
+    NETWORK_MONITORING="true"
+    NETWORK_INTERFACE="eth0"
+    NETWORK_THRESHOLD_BYTES=102400
+    TELEGRAM_ENABLED="false"
+    TELEGRAM_BOT_TOKEN=""
+    TELEGRAM_CHAT_ID=""
+    TELEGRAM_NOTIFY_STANDBY="true"
+    TELEGRAM_NOTIFY_SLEEP="true"
+    TELEGRAM_NOTIFY_BLOCKED="false"
+    WOL_OPTIONS="g"
+    RESTART_SAMBA="true"
+    FORCE_GIGABIT="false"
+    DHCP_RENEWAL="false"
+    
+    # Load from config file if exists
+    if [ -f "$CONFIG_FILE" ]; then
+        while IFS='=' read -r key value; do
+            # Remove quotes and export
+            value=$(echo "$value" | sed 's/^"\(.*\)"$/\1/')
+            case "$key" in
+                enabled) ENABLED="$value" ;;
+                idle_time_minutes) IDLE_TIME_MINUTES="$value" ;;
+                sleep_method) SLEEP_METHOD="$value" ;;
+                array_disks) ARRAY_DISKS="$value" ;;
+                ignore_disks) IGNORE_DISKS="$value" ;;
+                network_monitoring) NETWORK_MONITORING="$value" ;;
+                network_interface) NETWORK_INTERFACE="$value" ;;
+                network_threshold) NETWORK_THRESHOLD_BYTES="$value" ;;
+                telegram_enabled) TELEGRAM_ENABLED="$value" ;;
+                telegram_bot_token) TELEGRAM_BOT_TOKEN="$value" ;;
+                telegram_chat_id) TELEGRAM_CHAT_ID="$value" ;;
+                telegram_notify_standby) TELEGRAM_NOTIFY_STANDBY="$value" ;;
+                telegram_notify_sleep) TELEGRAM_NOTIFY_SLEEP="$value" ;;
+                telegram_notify_blocked) TELEGRAM_NOTIFY_BLOCKED="$value" ;;
+                wol_options) WOL_OPTIONS="$value" ;;
+                restart_samba) RESTART_SAMBA="$value" ;;
+                force_gigabit) FORCE_GIGABIT="$value" ;;
+                dhcp_renewal) DHCP_RENEWAL="$value" ;;
+            esac
+        done < "$CONFIG_FILE"
+    fi
+    
+    # Auto-detect array disks if not configured
+    if [ -z "$ARRAY_DISKS" ]; then
+        ARRAY_DISKS=$(lsblk -d -n -o NAME,TYPE | grep disk | awk '{print $1}' | tr '\n' ' ')
+        log_message "Auto-detected array disks: $ARRAY_DISKS"
+    fi
+}
+
+# ============================================================================
+# LOGGING AND NOTIFICATIONS
+# ============================================================================
+
+log_message() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> "$LOG_FILE"
+}
+
+send_telegram() {
+    if [ "$TELEGRAM_ENABLED" = "true" ] && [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ]; then
+        local message="$1"
+        local hostname=$(hostname)
+        local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+        
+        local full_message="🖥️ *$hostname* - $timestamp
+
+$message"
+
+        curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
+             -d chat_id="$TELEGRAM_CHAT_ID" \
+             -d text="$full_message" \
+             -d parse_mode="Markdown" > /dev/null 2>&1
+        
+        log_message "Telegram notification sent: $message"
+    fi
+}
+
+# ============================================================================
+# SLEEP FUNCTIONS
+# ============================================================================
+
+s3_pre_sleep_activity() {
+    log_message "=== Pre-Sleep Activities ==="
+    echo "🔧 Preparing for sleep..."
+    
+    # Configure Wake-on-LAN
+    if [ -n "$WOL_OPTIONS" ] && command -v ethtool >/dev/null 2>&1; then
+        log_message "Configuring Wake-on-LAN on $NETWORK_INTERFACE: $WOL_OPTIONS"
+        echo "🌐 Configuring Wake-on-LAN: $WOL_OPTIONS"
+        ethtool -s "$NETWORK_INTERFACE" wol "$WOL_OPTIONS" 2>/dev/null || {
+            log_message "WARNING: Wake-on-LAN configuration failed"
+            echo "⚠️ WARNING: Wake-on-LAN configuration failed"
+        }
+    fi
+    
+    # Filesystem sync
+    log_message "Syncing filesystems before sleep..."
+    echo "💾 Syncing filesystems..."
+    sync
+    sleep 1
+    
+    log_message "Pre-sleep preparation completed"
+    echo "✅ Sleep preparation completed"
+}
+
+s3_post_wake_activity() {
+    log_message "=== Post-Wake Activities ==="
+    echo "🌅 System awake!"
+    
+    # Force gigabit speed if enabled
+    if [ "$FORCE_GIGABIT" = "true" ] && command -v ethtool >/dev/null 2>&1; then
+        log_message "Forcing gigabit speed on $NETWORK_INTERFACE"
+        echo "🌐 Forcing gigabit speed..."
+        ethtool -s "$NETWORK_INTERFACE" speed 1000 2>/dev/null || {
+            log_message "WARNING: Gigabit forcing failed"
+        }
+        sleep 2
+    fi
+    
+    # DHCP renewal if enabled
+    if [ "$DHCP_RENEWAL" = "true" ]; then
+        log_message "Renewing DHCP lease"
+        echo "🔄 Renewing DHCP lease..."
+        if command -v dhcpcd >/dev/null 2>&1; then
+            dhcpcd -n 2>/dev/null || log_message "DHCP renewal failed"
+        elif command -v dhclient >/dev/null 2>&1; then
+            dhclient -r "$NETWORK_INTERFACE" 2>/dev/null
+            sleep 1
+            dhclient "$NETWORK_INTERFACE" 2>/dev/null || log_message "DHCP renewal failed"
+        fi
+        sleep 3
+    fi
+    
+    # Restart Samba if enabled
+    if [ "$RESTART_SAMBA" = "true" ]; then
+        log_message "Restarting Samba after wake-up..."
+        echo "🔄 Restarting Samba (important for SMB shares)..."
+        
+        if [ -x "/etc/rc.d/rc.samba" ]; then
+            /etc/rc.d/rc.samba restart 2>/dev/null && {
+                log_message "Samba restarted successfully"
+                echo "✅ Samba restarted successfully"
+            } || {
+                log_message "WARNING: Samba restart failed"
+                echo "⚠️ WARNING: Samba restart failed"
+            }
+            sleep 2
+        else
+            log_message "WARNING: /etc/rc.d/rc.samba not found"
+            echo "⚠️ WARNING: /etc/rc.d/rc.samba not found"
+        fi
+    fi
+    
+    log_message "All post-wake activities completed"
+    echo "✅ All post-wake activities completed"
+}
+
+execute_sleep() {
+    case "$SLEEP_METHOD" in
+        "dynamix_s3")
+            log_message "=== Executing Dynamix S3 Sleep ==="
+            echo "🌙 Using Dynamix S3 Sleep method..."
+            
+            s3_pre_sleep_activity
+            
+            log_message "Entering S3 sleep mode: echo -n mem > /sys/power/state"
+            echo "🌙 Entering S3 sleep mode..."
+            echo ""
+            
+            echo -n mem > /sys/power/state
+            
+            echo ""
+            log_message "System awoke from S3 sleep"
+            echo "🌅 System awoke!"
+            
+            s3_post_wake_activity
+            ;;
+        "systemctl_suspend")
+            log_message "=== Executing systemctl suspend ==="
+            echo "🌙 Using systemctl suspend..."
+            
+            s3_pre_sleep_activity
+            systemctl suspend
+            s3_post_wake_activity
+            ;;
+        *)
+            log_message "ERROR: Unknown sleep method: $SLEEP_METHOD"
+            echo "❌ ERROR: Unknown sleep method: $SLEEP_METHOD"
+            return 1
+            ;;
+    esac
+    
+    log_message "Sleep cycle completed"
+}
+
+# ============================================================================
+# MONITORING FUNCTIONS
+# ============================================================================
+
+check_array_status() {
+    if [ ! -f /var/local/emhttp/var.ini ]; then
+        log_message "ERROR: Array status file not found"
+        return 1
+    fi
+    
+    local array_state=$(grep -E '^mdState=' /var/local/emhttp/var.ini | cut -d'=' -f2 | tr -d '"')
+    
+    if [ "$array_state" != "STARTED" ]; then
+        log_message "Array is not started (Status: $array_state)"
+        return 1
+    fi
+    
+    return 0
+}
+
+check_array_activity() {
+    local active_disks=()
+    
+    log_message "=== Array Disk Standby Check ==="
+    
+    for disk_name in $ARRAY_DISKS; do
+        # Skip if disk is in ignore list
+        if [[ " $IGNORE_DISKS " =~ " $disk_name " ]]; then
+            log_message "Ignoring disk: $disk_name (in ignore list)"
+            continue
+        fi
+        
+        # Check if disk device exists
+        if [ ! -b "/dev/$disk_name" ]; then
+            log_message "WARNING: Disk /dev/$disk_name not found, skipping"
+            continue
+        fi
+        
+        # Check standby status
+        local standby_status=$(hdparm -C /dev/$disk_name 2>/dev/null | grep "drive state")
+        
+        if [[ "$standby_status" =~ "standby" ]] || [[ "$standby_status" =~ "sleeping" ]]; then
+            log_message "$disk_name: IN STANDBY"
+        else
+            echo "DISK ACTIVE: $disk_name is NOT in standby!"
+            log_message "DISK ACTIVE: $disk_name is NOT in standby ($standby_status)"
+            active_disks+=("$disk_name")
+        fi
+    done
+    
+    if [ ${#active_disks[@]} -gt 0 ]; then
+        local active_list=$(IFS=', '; echo "${active_disks[*]}")
+        log_message "ACTIVE ARRAY DISKS (not in standby): $active_list"
+        echo "ACTIVE ARRAY DISKS (not in standby): $active_list"
+        
+        # Reset timer
+        echo "$(date)" > "$ACTIVITY_CHECK_FILE"
+        log_message "Array activity detected - sleep skipped"
+        
+        if [ "$TELEGRAM_NOTIFY_BLOCKED" = "true" ]; then
+            send_telegram "💤 *Sleep blocked* - Active array disks:
+$(printf '%s\n' "${active_disks[@]}" | sed 's/^/• /')"
+        fi
+        
+        echo ""
+        echo "💤 SLEEP BLOCKED: Active array disks present"
+        echo ""
+        return 1
+    else
+        log_message "All array disks are in standby/spindown"
+        echo "All array disks are in standby/spindown ✓"
+        return 0
+    fi
+}
+
+check_network_activity() {
+    if [ "$NETWORK_MONITORING" != "true" ]; then
+        log_message "Network monitoring disabled"
+        return 1  # Low activity (monitoring disabled)
+    fi
+    
+    local has_network_activity=false
+    CURRENT_NETWORK_RATE=0
+    
+    # Collect network statistics
+    local total_rx=0
+    local total_tx=0
+    
+    while IFS= read -r line; do
+        if [[ "$line" =~ ^[[:space:]]*([^[:space:]]+):[[:space:]]*([0-9]+)[[:space:]]+[0-9]+[[:space:]]+[0-9]+[[:space:]]+[0-9]+[[:space:]]+[0-9]+[[:space:]]+[0-9]+[[:space:]]+[0-9]+[[:space:]]+[0-9]+[[:space:]]+([0-9]+) ]]; then
+            local interface="${BASH_REMATCH[1]}"
+            local rx_bytes="${BASH_REMATCH[2]}"
+            local tx_bytes="${BASH_REMATCH[3]}"
+            
+            # Skip loopback
+            if [ "$interface" != "lo" ]; then
+                total_rx=$((total_rx + rx_bytes))
+                total_tx=$((total_tx + tx_bytes))
+            fi
+        fi
+    done < /proc/net/dev
+    
+    local total_network=$((total_rx + total_tx))
+    
+    if [ -f "$NETWORK_STATE_FILE" ]; then
+        local prev_network=$(cat "$NETWORK_STATE_FILE")
+        local network_diff=$((total_network - prev_network))
+        
+        # Calculate bytes per second (5-minute cron interval)
+        local cron_interval_seconds=300
+        local network_rate_per_sec=$((network_diff / cron_interval_seconds))
+        CURRENT_NETWORK_RATE=$network_rate_per_sec
+        
+        log_message "Network traffic: ${network_rate_per_sec} Bytes/s (Threshold: ${NETWORK_THRESHOLD_BYTES} Bytes/s)"
+        echo "Network traffic: ${network_rate_per_sec} Bytes/s (Threshold: ${NETWORK_THRESHOLD_BYTES} Bytes/s)"
+        
+        if [ "$network_rate_per_sec" -gt "$NETWORK_THRESHOLD_BYTES" ]; then
+            log_message "Network activity above threshold: ${network_rate_per_sec} > ${NETWORK_THRESHOLD_BYTES} Bytes/s"
+            echo "Network activity above threshold: ${network_rate_per_sec} > ${NETWORK_THRESHOLD_BYTES} Bytes/s"
+            has_network_activity=true
+            echo "$(date)" > "$ACTIVITY_CHECK_FILE"
+        fi
+    else
+        log_message "First network measurement - baseline created"
+        echo "First network measurement - baseline created"
+        CURRENT_NETWORK_RATE="N/A (first measurement)"
+    fi
+    
+    echo "$total_network" > "$NETWORK_STATE_FILE"
+    
+    if [ "$has_network_activity" = true ]; then
+        return 0  # High network activity
+    else
+        return 1  # Low network activity
+    fi
+}
+
+# ============================================================================
+# MAIN FUNCTION
+# ============================================================================
+
+main() {
+    # Load configuration
+    load_config
+    
+    # Check if plugin is enabled (unless force sleep)
+    if [ "$ENABLED" != "true" ] && [ "$FORCE_SLEEP" != true ]; then
+        log_message "Smart Sleep Manager is disabled"
+        exit 0
+    fi
+    
+    log_message "=== Smart Sleep Manager Check Started ==="
+    echo "=== Smart Sleep Manager Check Started ==="
+    
+    # Force sleep if requested
+    if [ "$FORCE_SLEEP" = true ]; then
+        log_message "Force sleep requested - executing immediately"
+        echo "🌙 FORCE SLEEP: Executing sleep immediately"
+        
+        if [ "$TELEGRAM_NOTIFY_SLEEP" = "true" ]; then
+            send_telegram "🌙 *Forced Sleep Activated!*
+🔧 Initiated manually
+🚀 WOL wake-up available as usual"
+        fi
+        
+        execute_sleep
+        exit 0
+    fi
+    
+    # Check array status
+    if ! check_array_status; then
+        log_message "Array is not ready - sleep skipped"
+        echo "Array is not ready - sleep skipped"
+        exit 0
+    fi
+    
+    echo "Array Status: OK - Array is started"
+    log_message "Array Status: OK - Array is started"
+    
+    # Check array disk activity
+    if ! check_array_activity; then
+        exit 0  # Active disks found, exit
+    fi
+    
+    # Check network activity
+    if check_network_activity; then
+        log_message "High network activity detected - sleep skipped"
+        echo ""
+        echo "💤 SLEEP BLOCKED: Network traffic too high"
+        echo ""
+        exit 0
+    fi
+    
+    echo "Network activity under threshold ✓"
+    log_message "Network activity under threshold"
+    
+    # Check timer
+    if [ -f "$ACTIVITY_CHECK_FILE" ]; then
+        local last_activity=$(date -d "$(cat "$ACTIVITY_CHECK_FILE")" +%s 2>/dev/null || echo 0)
+        local current_time=$(date +%s)
+        local standby_minutes=$(( (current_time - last_activity) / 60 ))
+        
+        log_message "All conditions met for $standby_minutes minutes"
+        
+        if [ "$standby_minutes" -ge "$IDLE_TIME_MINUTES" ]; then
+            log_message "System going to sleep (all conditions met for $standby_minutes minutes)"
+            
+            if [ "$TELEGRAM_NOTIFY_SLEEP" = "true" ]; then
+                send_telegram "🌙 *Server going to sleep!*
+✅ All array disks in standby for $standby_minutes minutes
+💤 Method: $SLEEP_METHOD
+🔄 Samba will restart after WOL automatically
+🚀 WOL wake-up available as usual!"
+            fi
+            
+            echo ""
+            echo "🌙 SLEEP ACTIVATED: System going to sleep NOW! 🌙"
+            echo "   Reason: All conditions met for $standby_minutes minutes (minimum: $IDLE_TIME_MINUTES)"
+            echo ""
+            
+            execute_sleep
+            
+            log_message "Sleep cycle completed, system awake"
+        else
+            if [ "$TELEGRAM_NOTIFY_STANDBY" = "true" ]; then
+                send_telegram "⏳ *Timer continues*
+✅ All array disks in standby for $standby_minutes minutes
+🌐 Network traffic: $CURRENT_NETWORK_RATE Bytes/s
+⏰ $((IDLE_TIME_MINUTES - standby_minutes)) minutes until sleep"
+            fi
+            
+            echo ""
+            echo "⏳ WAITING: $((IDLE_TIME_MINUTES - standby_minutes)) minutes until sleep possible"
+            echo "   All conditions met for: $standby_minutes minutes (minimum: $IDLE_TIME_MINUTES)"
+            echo ""
+        fi
+    else
+        echo "$(date)" > "$ACTIVITY_CHECK_FILE"
+        log_message "First execution - standby timer started"
+        
+        if [ "$TELEGRAM_NOTIFY_STANDBY" = "true" ]; then
+            send_telegram "⏳ *Standby timer started*
+✅ All array disks are in standby
+🌐 Network traffic low ($CURRENT_NETWORK_RATE Bytes/s)
+⏰ Sleep possible in $IDLE_TIME_MINUTES minutes"
+        fi
+        
+        echo ""
+        echo "🔄 FIRST EXECUTION: Standby timer started"
+        echo "   Sleep possible in $IDLE_TIME_MINUTES minutes (if all conditions remain met)"
+        echo ""
+    fi
+    
+    log_message "=== Smart Sleep Manager Check Completed ==="
+}
+
+# ============================================================================
+# SCRIPT EXECUTION
+# ============================================================================
+
+main "$@"

@@ -1,0 +1,23 @@
+#!/bin/bash
+# Smart Sleep Manager - Pre-Sleep Custom Commands
+# This script is executed before the system goes to sleep
+
+# You can add custom commands here that should run before sleep
+# Examples:
+# - Stop specific services
+# - Clean up temporary files
+# - Send notifications to other systems
+
+echo "$(date '+%Y-%m-%d %H:%M:%S') - Pre-sleep custom commands executed" >> /tmp/smart-sleep.log
+
+# Example: Stop a specific service
+# systemctl stop myservice
+
+# Example: Clean up temporary files
+# rm -rf /tmp/some-temp-files/*
+
+# Example: Send notification to external system
+# curl -X POST "http://external-system/api/sleep-notification"
+
+# The script should exit with code 0 for success
+exit 0

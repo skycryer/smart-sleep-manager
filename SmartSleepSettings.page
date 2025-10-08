@@ -1,0 +1,315 @@
+Menu="Settings"
+Title="Smart Sleep Manager"
+Icon="smartsleep.png"
+---
+<?PHP
+/* Smart Sleep Manager Plugin for Unraid
+ * Automated sleep management with configurable conditions
+ * Based on sleepy.sh with web UI configuration
+ */
+?>
+<?
+$plugin = 'smart.sleep.manager';
+$scripts = "$docroot/plugins/$plugin/scripts";
+$config = "/boot/config/plugins/$plugin/$plugin.cfg";
+$cfg = parse_plugin_cfg($plugin);
+
+// Get available disks
+exec("lsblk -d -n -o NAME,TYPE | grep disk | awk '{print \$1}'", $all_disks);
+exec("cat /proc/mdstat | grep -E '^md[0-9]+' | awk '{print \$1}'", $array_info);
+
+// Get network interfaces
+exec("ip link show | grep -E '^[0-9]+:' | awk -F': ' '{print \$2}' | grep -v lo", $network_interfaces);
+
+function is_array_disk($disk, $array_info) {
+    foreach ($array_info as $md) {
+        $details = exec("cat /proc/mdstat | grep -A1 '$md' | tail -1");
+        if (strpos($details, $disk) !== false) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// Separate array disks from others
+$array_disks = [];
+$other_disks = [];
+foreach ($all_disks as $disk) {
+    if (is_array_disk($disk, $array_info)) {
+        $array_disks[] = $disk;
+    } else {
+        $other_disks[] = $disk;
+    }
+}
+?>
+
+<script>
+function validateForm(form) {
+    // Validate idle time
+    var idleTime = parseInt(form.idle_time_minutes.value);
+    if (isNaN(idleTime) || idleTime < 1 || idleTime > 1440) {
+        alert('Idle time must be between 1 and 1440 minutes');
+        return false;
+    }
+    
+    // Validate network threshold
+    var threshold = parseInt(form.network_threshold.value);
+    if (isNaN(threshold) || threshold < 0) {
+        alert('Network threshold must be a positive number');
+        return false;
+    }
+    
+    // Prepare array disks selection
+    var arrayDisks = [];
+    for (var i=0; item=form.array_disks.options[i]; i++) {
+        if (item.selected) {
+            arrayDisks.push(item.value);
+        }
+    }
+    form.array_disks_list.value = arrayDisks.join(' ');
+    
+    // Prepare ignore disks selection
+    var ignoreDisks = [];
+    for (var i=0; item=form.ignore_disks.options[i]; i++) {
+        if (item.selected) {
+            ignoreDisks.push(item.value);
+        }
+    }
+    form.ignore_disks_list.value = ignoreDisks.join(' ');
+    
+    return true;
+}
+
+function testTelegram(form) {
+    if (!form.telegram_bot_token.value || !form.telegram_chat_id.value) {
+        alert('Please enter both Bot Token and Chat ID to test Telegram');
+        return;
+    }
+    
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', '/plugins/<?=$plugin?>/include/test_telegram.php', true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4) {
+            if (xhr.status === 200) {
+                var response = JSON.parse(xhr.responseText);
+                if (response.success) {
+                    alert('✅ Telegram test successful! Message sent.');
+                } else {
+                    alert('❌ Telegram test failed: ' + response.error);
+                }
+            } else {
+                alert('❌ Network error during Telegram test');
+            }
+        }
+    };
+    xhr.send('bot_token=' + encodeURIComponent(form.telegram_bot_token.value) + 
+             '&chat_id=' + encodeURIComponent(form.telegram_chat_id.value));
+}
+
+function runSleepCheck() {
+    if (confirm('Run sleep check now? This will execute the sleep logic once manually.')) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '/plugins/<?=$plugin?>/scripts/smart_sleep.sh', true);
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4) {
+                alert('Sleep check executed. Check the log file for details.');
+            }
+        };
+        xhr.send();
+    }
+}
+
+$(function() {
+    $("#array_disks_select").dropdownchecklist({emptyText:'None', width:200, explicitClose:'...close'});
+    $("#ignore_disks_select").dropdownchecklist({emptyText:'None', width:200, explicitClose:'...close'});
+});
+</script>
+
+<form markdown="1" name="smart_sleep_settings" method="POST" action="/update.php" target="progressFrame" onsubmit="return validateForm(this)">
+<input type="hidden" name="#file" value="<?=$plugin?>/<?=$plugin?>.cfg">
+<input type="hidden" name="#include" value="plugins/<?=$plugin?>/include/update.sleep.php">
+<input type="hidden" name="array_disks_list" value="">
+<input type="hidden" name="ignore_disks_list" value="">
+
+<div style="width: 100%; margin-bottom: 20px;">
+    <h2>🌙 Smart Sleep Manager Configuration</h2>
+    <p>Automated sleep management for your Unraid server with intelligent monitoring and Telegram notifications.</p>
+</div>
+
+## ⚙️ Basic Settings
+
+_(Enable Smart Sleep)_:
+: <select name="enabled">
+  <?=mk_option($cfg['enabled'], "true", "Enabled")?>
+  <?=mk_option($cfg['enabled'], "false", "Disabled")?>
+  </select>
+
+> Enable or disable the Smart Sleep Manager. When disabled, the cron job will not perform any sleep checks.
+
+_(Idle Time Before Sleep)_ (minutes):
+: <input type="number" name="idle_time_minutes" min="1" max="1440" value="<?=$cfg['idle_time_minutes']?:15?>" class="narrow">
+
+> Time in minutes that all conditions must be met before the system goes to sleep. Default: 15 minutes.
+
+_(Sleep Method)_:
+: <select name="sleep_method">
+  <?=mk_option($cfg['sleep_method'], "dynamix_s3", "Dynamix S3 Sleep (Recommended)")?>
+  <?=mk_option($cfg['sleep_method'], "systemctl_suspend", "systemctl suspend")?>
+  </select>
+
+> Sleep method to use. Dynamix S3 is recommended as it includes proper WOL setup and post-wake activities.
+
+## 💾 Array Disk Monitoring
+
+_(Array Disks to Monitor)_:
+: <select id="array_disks_select" name="array_disks" style="display:none" multiple>
+  <?foreach ($array_disks as $disk):?>
+  <?=mk_option_check($cfg['array_disks'], $disk, "/dev/$disk")?>
+  <?endforeach;?>
+  </select>
+
+> Select which array disks must be in standby before sleep is allowed. Only actual array disks are shown here.
+
+_(Disks to Ignore)_:
+: <select id="ignore_disks_select" name="ignore_disks" style="display:none" multiple>
+  <?foreach ($other_disks as $disk):?>
+  <?=mk_option_check($cfg['ignore_disks'], $disk, "/dev/$disk (Cache/Docker/Parity)")?>
+  <?endforeach;?>
+  </select>
+
+> Select disks to ignore (Cache, Docker, Parity drives). These disks will not prevent sleep even if active.
+
+## 🌐 Network Monitoring
+
+_(Monitor Network Activity)_:
+: <select name="network_monitoring">
+  <?=mk_option($cfg['network_monitoring'], "true", "Enabled")?>
+  <?=mk_option($cfg['network_monitoring'], "false", "Disabled")?>
+  </select>
+
+> Enable network activity monitoring. High network traffic will prevent sleep.
+
+_(Network Interface)_:
+: <select name="network_interface">
+  <?foreach ($network_interfaces as $interface):?>
+  <?=mk_option($cfg['network_interface'], trim($interface), trim($interface))?>
+  <?endforeach;?>
+  </select>
+
+> Network interface to monitor for activity (usually eth0 or br0).
+
+_(Network Threshold)_ (Bytes/second):
+: <input type="number" name="network_threshold" min="0" value="<?=$cfg['network_threshold']?:102400?>" class="narrow">
+
+> Network traffic threshold in bytes per second. Traffic above this level will prevent sleep. Default: 102400 (100 KB/s).
+
+## 📱 Telegram Notifications
+
+_(Enable Telegram)_:
+: <select name="telegram_enabled">
+  <?=mk_option($cfg['telegram_enabled'], "true", "Enabled")?>
+  <?=mk_option($cfg['telegram_enabled'], "false", "Disabled")?>
+  </select>
+
+> Enable Telegram bot notifications for sleep events.
+
+_(Bot Token)_:
+: <input type="text" name="telegram_bot_token" value="<?=$cfg['telegram_bot_token']?>" placeholder="123456789:ABCdefGHIjklMNOpqrsTUVwxyz" style="width: 300px;">
+
+> Telegram Bot Token from @BotFather. Format: 123456789:ABCdefGHIjklMNOpqrsTUVwxyz
+
+_(Chat ID)_:
+: <input type="text" name="telegram_chat_id" value="<?=$cfg['telegram_chat_id']?>" placeholder="Your Chat ID" class="narrow">
+
+> Your Telegram Chat ID. Send a message to your bot, then visit: https://api.telegram.org/botTOKEN/getUpdates
+
+_(Test Telegram)_:
+: <input type="button" value="Test Telegram" onclick="testTelegram(this.form)">
+
+> Send a test message to verify Telegram configuration.
+
+### Notification Types
+
+_(Notify on Standby Timer Start)_:
+: <select name="telegram_notify_standby">
+  <?=mk_option($cfg['telegram_notify_standby'], "true", "Enabled")?>
+  <?=mk_option($cfg['telegram_notify_standby'], "false", "Disabled")?>
+  </select>
+
+_(Notify on Sleep)_:
+: <select name="telegram_notify_sleep">
+  <?=mk_option($cfg['telegram_notify_sleep'], "true", "Enabled")?>
+  <?=mk_option($cfg['telegram_notify_sleep'], "false", "Disabled")?>
+  </select>
+
+_(Notify on Sleep Blocked)_:
+: <select name="telegram_notify_blocked">
+  <?=mk_option($cfg['telegram_notify_blocked'], "false", "Disabled")?>
+  <?=mk_option($cfg['telegram_notify_blocked'], "true", "Enabled")?>
+  </select>
+
+> Warning: Sleep blocked notifications can be frequent and may spam your Telegram.
+
+## 🔧 Advanced Settings
+
+_(Wake-on-LAN Options)_:
+: <input type="text" name="wol_options" value="<?=$cfg['wol_options']?:'g'?>" class="narrow" placeholder="g">
+
+> WOL options for ethtool (usually 'g' for MagicPacket). Leave default unless you have specific requirements.
+
+_(Restart Samba after Wake)_:
+: <select name="restart_samba">
+  <?=mk_option($cfg['restart_samba'], "true", "Enabled")?>
+  <?=mk_option($cfg['restart_samba'], "false", "Disabled")?>
+  </select>
+
+> Restart Samba service after wake-up. Recommended to ensure SMB shares work properly.
+
+_(Force Gigabit after Wake)_:
+: <select name="force_gigabit">
+  <?=mk_option($cfg['force_gigabit'], "false", "Disabled")?>
+  <?=mk_option($cfg['force_gigabit'], "true", "Enabled")?>
+  </select>
+
+> Force gigabit speed after wake-up. Only enable if you have network issues after wake.
+
+_(DHCP Renewal after Wake)_:
+: <select name="dhcp_renewal">
+  <?=mk_option($cfg['dhcp_renewal'], "false", "Disabled")?>
+  <?=mk_option($cfg['dhcp_renewal'], "true", "Enabled")?>
+  </select>
+
+> Renew DHCP lease after wake-up. Only enable if using DHCP and having network issues.
+
+## 📋 Monitoring & Testing
+
+_(Manual Sleep Check)_:
+: <input type="button" value="Run Sleep Check Now" onclick="runSleepCheck()">
+
+> Manually execute the sleep check logic once. Useful for testing configuration.
+
+_(Log File Location)_:
+: `/tmp/smart-sleep.log`
+
+> View the log file to monitor Smart Sleep Manager activity and troubleshoot issues.
+
+_(Cron Schedule)_:
+: Every 5 minutes (`*/5 * * * *`)
+
+> The automated sleep check runs every 5 minutes via cron job.
+
+&nbsp;
+: <input type="submit" name="#apply" value="Apply"><input type="button" value="Done" onclick="done()">
+
+</form>
+
+<script>
+$(function() {
+    // Initialize dropdowns after DOM is ready
+    setTimeout(function() {
+        $("#array_disks_select").dropdownchecklist("refresh");
+        $("#ignore_disks_select").dropdownchecklist("refresh");
+    }, 100);
+});
+</script>
