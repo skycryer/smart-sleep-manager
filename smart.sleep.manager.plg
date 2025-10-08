@@ -1,147 +1,290 @@
-<?xml version="1.0" standalone="yes"?><?xml version="1.0" standalone="yes"?>
+<?xml version="1.0" standalone="yes"?><?xml version="1.0" standalone="yes"?><?xml version="1.0" standalone="yes"?>
 
-<!DOCTYPE PLUGIN [<!DOCTYPE PLUGIN [
+<!DOCTYPE PLUGIN [
 
-<!ENTITY name      "smart.sleep.manager"><!ENTITY name      "smart.sleep.manager">
+<!ENTITY name      "smart.sleep.manager"><!DOCTYPE PLUGIN [<!DOCTYPE PLUGIN [
 
-<!ENTITY author    "Smart Sleep Manager Team"><!ENTITY author    "Smart Sleep Manager Team">
+<!ENTITY author    "Smart Sleep Manager Team">
 
-<!ENTITY version   "2025.01.01"><!ENTITY version   "2025.01.01">
+<!ENTITY version   "2025.10.08"><!ENTITY name      "smart.sleep.manager"><!ENTITY name      "smart.sleep.manager">
 
-<!ENTITY launch    "Settings/SmartSleepSettings"><!ENTITY launch    "Settings/SmartSleepSettings">
+<!ENTITY launch    "Settings/SmartSleepSettings">
 
-<!ENTITY gitURL    "https://raw.githubusercontent.com/skycryer/smart-sleep-manager/main"><!ENTITY gitURL    "https://raw.githubusercontent.com/skycryer/smart-sleep-manager/main">
+<!ENTITY gitURL    "https://raw.githubusercontent.com/skycryer/smart-sleep-manager/main"><!ENTITY author    "Smart Sleep Manager Team"><!ENTITY author    "Smart Sleep Manager Team">
 
-<!ENTITY pluginURL "&gitURL;/smart.sleep.manager.plg"><!ENTITY pluginURL "&gitURL;/smart.sleep.manager.plg">
+<!ENTITY pluginURL "&gitURL;/smart.sleep.manager.plg">
+
+]><!ENTITY version   "2025.01.01"><!ENTITY version   "2025.01.01">
+
+
+
+<PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" min="6.12.0"><!ENTITY launch    "Settings/SmartSleepSettings"><!ENTITY launch    "Settings/SmartSleepSettings">
+
+
+
+<CHANGES><!ENTITY gitURL    "https://raw.githubusercontent.com/skycryer/smart-sleep-manager/main"><!ENTITY gitURL    "https://raw.githubusercontent.com/skycryer/smart-sleep-manager/main">
+
+###2025.10.08
+
+- Fixed XML parse error by using external file downloads<!ENTITY pluginURL "&gitURL;/smart.sleep.manager.plg"><!ENTITY pluginURL "&gitURL;/smart.sleep.manager.plg">
+
+- Clean plugin structure with minimal inline content
 
 ]>]>
 
+###2025.01.01
+
+- Initial release
+
+- Automated sleep management with array disk monitoring
+
+- Network activity monitoring<PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" min="6.12.0"><PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" min="6.12.0">
+
+- Telegram notifications
+
+- Web-based configuration interface
+
+- Based on Dynamix S3 Sleep methodology
+
+</CHANGES><CHANGES><CHANGES>
 
 
-<PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" min="6.12.0"><PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" min="6.12.0">
+
+<!--###2025.01.01###2025.01.01
+
+###############################################
+
+# PLUGIN INSTALLATION- Initial release- Initial release
+
+###############################################
+
+-->- Automated sleep management with array disk monitoring- Automated sleep management with array disk monitoring
 
 
 
-<CHANGES><CHANGES>
+<FILE Run="/bin/bash">- Network activity monitoring- Network activity monitoring
 
-###2025.01.01###2025.01.01
+<INLINE>
 
-- Initial release- Initial release
+echo "Installing Smart Sleep Manager..."- Telegram notifications- Telegram notifications
 
-- Automated sleep management with array disk monitoring- Automated sleep management with array disk monitoring
 
-- Network activity monitoring- Network activity monitoring
 
-- Telegram notifications- Telegram notifications
+# Remove old plugin files- Web-based configuration interface- Web-based configuration interface
 
-- Web-based configuration interface- Web-based configuration interface
+rm -rf /usr/local/emhttp/plugins/&name;
 
 - Based on Dynamix S3 Sleep methodology- Based on Dynamix S3 Sleep methodology
 
-</CHANGES></CHANGES>
+# Create plugin directory structure
+
+mkdir -p /usr/local/emhttp/plugins/&name;/{include,scripts,icons,images}</CHANGES></CHANGES>
+
+mkdir -p /boot/config/plugins/&name;
 
 
 
-<!--<!--
+echo "Plugin directories created"
+
+</INLINE><!--<!--
+
+</FILE>
 
 ##############################################################################################
 
-# REMOVE OLD PLUGIN# REMOVE OLD PLUGIN
+<!--
 
-##############################################################################################
+################################################ REMOVE OLD PLUGIN# REMOVE OLD PLUGIN
+
+# DOWNLOAD PLUGIN FILES FROM GITHUB
+
+#############################################################################################################################################
+
+-->
 
 -->-->
 
+<FILE Name="/usr/local/emhttp/plugins/&name;/default.cfg">
 
+<URL>&gitURL;/default.cfg</URL>
+
+</FILE>
 
 <FILE Run="/bin/bash"><FILE Run="/bin/bash">
 
-<INLINE><INLINE>
+<FILE Name="/usr/local/emhttp/plugins/&name;/SmartSleepSettings.page">
+
+<URL>&gitURL;/SmartSleepSettings.page</URL><INLINE><INLINE>
+
+</FILE>
 
 # Remove old plugin files# Remove old plugin files
 
-rm -rf /usr/local/emhttp/plugins/&name;rm -rf /usr/local/emhttp/plugins/&name;
+<FILE Name="/usr/local/emhttp/plugins/&name;/SleepManager.php">
+
+<URL>&gitURL;/SleepManager.php</URL>rm -rf /usr/local/emhttp/plugins/&name;rm -rf /usr/local/emhttp/plugins/&name;
+
+</FILE>
 
 
 
-# Create plugin directory structure# Create plugin directory structure
+<FILE Name="/usr/local/emhttp/plugins/&name;/include/update.sleep.php">
+
+<URL>&gitURL;/include/update.sleep.php</URL># Create plugin directory structure# Create plugin directory structure
+
+</FILE>
 
 mkdir -p /usr/local/emhttp/plugins/&name;/{include,scripts,icons,images}mkdir -p /usr/local/emhttp/plugins/&name;/{include,scripts,icons,images}
 
-mkdir -p /boot/config/plugins/&name;mkdir -p /boot/config/plugins/&name;
+<FILE Name="/usr/local/emhttp/plugins/&name;/include/SleepMode.php">
+
+<URL>&gitURL;/include/SleepMode.php</URL>mkdir -p /boot/config/plugins/&name;mkdir -p /boot/config/plugins/&name;
+
+</FILE>
 
 
 
-echo "Plugin directories created"echo "Plugin directories created"
+<FILE Name="/usr/local/emhttp/plugins/&name;/include/test_telegram.php">
+
+<URL>&gitURL;/include/test_telegram.php</URL>echo "Plugin directories created"echo "Plugin directories created"
+
+</FILE>
 
 </INLINE></INLINE>
 
-</FILE></FILE>
+<FILE Name="/usr/local/emhttp/plugins/&name;/scripts/smart_sleep.sh" Mode="0755">
+
+<URL>&gitURL;/scripts/smart_sleep.sh</URL></FILE></FILE>
+
+</FILE>
 
 
 
-<!--<!--
+<FILE Name="/usr/local/emhttp/plugins/&name;/scripts/preRun" Mode="0755">
+
+<URL>&gitURL;/scripts/preRun</URL><!--<!--
+
+</FILE>
 
 ##############################################################################################
 
-# DOWNLOAD PLUGIN FILES FROM GITHUB# DOWNLOAD PLUGIN FILES FROM GITHUB
+<FILE Name="/usr/local/emhttp/plugins/&name;/scripts/postRun" Mode="0755">
+
+<URL>&gitURL;/scripts/postRun</URL># DOWNLOAD PLUGIN FILES FROM GITHUB# DOWNLOAD PLUGIN FILES FROM GITHUB
+
+</FILE>
 
 ##############################################################################################
 
--->-->
+<!--
 
+###############################################-->-->
 
+# POST-INSTALLATION SETUP
+
+###############################################
+
+-->
 
 <FILE Name="/usr/local/emhttp/plugins/&name;/default.cfg"><FILE Name="/usr/local/emhttp/plugins/&name;/SmartSleepSettings.page">
 
-<URL>&gitURL;/default.cfg</URL><INLINE>
+<FILE Run="/bin/bash">
+
+<INLINE><URL>&gitURL;/default.cfg</URL><INLINE>
+
+echo "Configuring Smart Sleep Manager..."
 
 </FILE><![CDATA[
 
-Menu="Settings"
+# Copy default configuration if it doesn't exist
 
-<FILE Name="/usr/local/emhttp/plugins/&name;/SmartSleepSettings.page">Title="Smart Sleep Manager"
+if [ ! -f /boot/config/plugins/&name;/&name;.cfg ]; thenMenu="Settings"
+
+  cp /usr/local/emhttp/plugins/&name;/default.cfg /boot/config/plugins/&name;/&name;.cfg
+
+  echo "Default configuration copied"<FILE Name="/usr/local/emhttp/plugins/&name;/SmartSleepSettings.page">Title="Smart Sleep Manager"
+
+fi
 
 <URL>&gitURL;/SmartSleepSettings.page</URL>Icon="smartsleep.png"
 
-</FILE>---
+# Set correct permissions
 
-<?PHP
+chmod +x /usr/local/emhttp/plugins/&name;/scripts/* 2>/dev/null || true</FILE>---
 
-<FILE Name="/usr/local/emhttp/plugins/&name;/SleepManager.php">/* Smart Sleep Manager Plugin for Unraid
 
-<URL>&gitURL;/SleepManager.php</URL> * Automated sleep management with configurable conditions
 
-</FILE> * Based on sleepy.sh with web UI configuration
+# Install cron job for automated sleep checking<?PHP
+
+CRON_JOB="*/5 * * * * /usr/local/emhttp/plugins/&name;/scripts/smart_sleep.sh >/dev/null 2>&1"
+
+if ! crontab -l 2>/dev/null | grep -q "smart_sleep.sh"; then<FILE Name="/usr/local/emhttp/plugins/&name;/SleepManager.php">/* Smart Sleep Manager Plugin for Unraid
+
+  (crontab -l 2>/dev/null; echo "$CRON_JOB") | crontab -
+
+  echo "Cron job installed: Check every 5 minutes"<URL>&gitURL;/SleepManager.php</URL> * Automated sleep management with configurable conditions
+
+else
+
+  echo "Cron job already exists"</FILE> * Based on sleepy.sh with web UI configuration
+
+fi
 
  */
 
-<FILE Name="/usr/local/emhttp/plugins/&name;/include/update.sleep.php">?>
+echo "Smart Sleep Manager installed successfully!"
 
-<URL>&gitURL;/include/update.sleep.php</URL><?
+echo "Access settings via: Settings > Smart Sleep Manager"<FILE Name="/usr/local/emhttp/plugins/&name;/include/update.sleep.php">?>
 
-</FILE>$plugin = 'smart.sleep.manager';
+</INLINE>
 
-$scripts = "$docroot/plugins/$plugin/scripts";
+</FILE><URL>&gitURL;/include/update.sleep.php</URL><?
 
-<FILE Name="/usr/local/emhttp/plugins/&name;/include/SleepMode.php">$config = "/boot/config/plugins/$plugin/$plugin.cfg";
 
-<URL>&gitURL;/include/SleepMode.php</URL>$cfg = parse_plugin_cfg($plugin);
 
-</FILE>
+<!--</FILE>$plugin = 'smart.sleep.manager';
 
-// Get available disks
+###############################################
+
+# PLUGIN REMOVAL$scripts = "$docroot/plugins/$plugin/scripts";
+
+###############################################
+
+--><FILE Name="/usr/local/emhttp/plugins/&name;/include/SleepMode.php">$config = "/boot/config/plugins/$plugin/$plugin.cfg";
+
+
+
+<FILE Run="/bin/bash" Method="remove"><URL>&gitURL;/include/SleepMode.php</URL>$cfg = parse_plugin_cfg($plugin);
+
+<INLINE>
+
+echo "Removing Smart Sleep Manager..."</FILE>
+
+
+
+# Remove cron job// Get available disks
+
+crontab -l 2>/dev/null | grep -v "smart_sleep.sh" | crontab - 2>/dev/null || true
 
 <FILE Name="/usr/local/emhttp/plugins/&name;/include/test_telegram.php">exec("lsblk -d -n -o NAME,TYPE | grep disk | awk '{print \$1}'", $all_disks);
 
-<URL>&gitURL;/include/test_telegram.php</URL>exec("cat /proc/mdstat | grep -E '^md[0-9]+' | awk '{print \$1}'", $array_info);
+# Remove plugin files
+
+rm -rf /usr/local/emhttp/plugins/&name;<URL>&gitURL;/include/test_telegram.php</URL>exec("cat /proc/mdstat | grep -E '^md[0-9]+' | awk '{print \$1}'", $array_info);
+
+
+
+echo "Smart Sleep Manager removed successfully!"</FILE>
+
+echo "Configuration preserved in /boot/config/plugins/&name;/"
+
+</INLINE>// Get network interfaces
 
 </FILE>
 
-// Get network interfaces
-
 <FILE Name="/usr/local/emhttp/plugins/&name;/scripts/smart_sleep.sh" Mode="0755">exec("ip link show | grep -E '^[0-9]+:' | awk -F': ' '{print \$2}' | grep -v lo", $network_interfaces);
 
+</PLUGIN>
 <URL>&gitURL;/scripts/smart_sleep.sh</URL>
 
 </FILE>function is_array_disk($disk, $array_info) {
