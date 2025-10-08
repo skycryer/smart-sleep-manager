@@ -2,8 +2,22 @@ Menu="Settings"
 Title="Smart Sleep Manager"
 Icon="smartsleep.png"
 ---
-<?PHP
-/* Smart Sleep Manager Plugin for Unraid
+<?P# Get network interfaces
+exec("ip link show | grep -E '^[0-9]+:' | awk -F': ' '{print \$2}' | grep -v lo", $network_interfaces);
+
+// Helper function for multi-select options with space-separated values
+function mk_disk_option($config_value, $disk_name, $display_text) {
+    $selected = '';
+    if (!empty($config_value)) {
+        $selected_disks = explode(' ', trim($config_value));
+        if (in_array($disk_name, $selected_disks)) {
+            $selected = 'selected="selected"';
+        }
+    }
+    return "<option value=\"$disk_name\" $selected>$display_text</option>";
+}
+?>
+<script>/* Smart Sleep Manager Plugin for Unraid
  * Automated sleep management with configurable conditions
  * Based on sleepy.sh with web UI configuration
  */
@@ -232,7 +246,7 @@ _(Sleep Method)_:
 _(Array Disks to Monitor)_:
 : <select id="array_disks_select" name="array_disks" multiple style="width: 200px; height: 100px;">
   <?foreach ($array_disks as $disk):?>
-  <?=mk_option_check($cfg['array_disks'], $disk, "/dev/$disk")?>
+  <?=mk_disk_option($cfg['array_disks'], $disk, "/dev/$disk")?>
   <?endforeach;?>
   </select>
 
@@ -240,8 +254,8 @@ _(Array Disks to Monitor)_:
 
 _(Disks to Ignore)_:
 : <select id="ignore_disks_select" name="ignore_disks" multiple style="width: 200px; height: 100px;">
-  <?foreach ($other_disks as $disk):?>
-  <?=mk_option_check($cfg['ignore_disks'], $disk, "/dev/$disk (Cache/Docker/Parity)")?>
+  <?foreach ($all_disks as $disk):?>
+  <?=mk_disk_option($cfg['ignore_disks'], $disk, "/dev/$disk (Cache/Docker/Parity)")?>
   <?endforeach;?>
   </select>
 

@@ -2,7 +2,7 @@
 <!DOCTYPE PLUGIN [
 <!ENTITY name "smart.sleep.manager">
 <!ENTITY author "Smart Sleep Manager Team">
-<!ENTITY version "2025.10.08.5">
+<!ENTITY version "2025.10.08.7">
 <!ENTITY launch "Settings/SmartSleepSettings">
 <!ENTITY gitURL "https://raw.githubusercontent.com/skycryer/smart-sleep-manager/main">
 <!ENTITY pluginURL "&gitURL;/smart.sleep.manager.plg">
@@ -11,6 +11,18 @@
 <PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" min="6.12.0">
 
 <CHANGES>
+###2025.10.08.7
+- CRITICAL FIX: Added missing opening script tag causing JavaScript to display as text
+- Fixed JavaScript functions appearing in page head instead of being executed
+- Resolved validateForm, testTelegram, and runSleepCheck function visibility issues
+- JavaScript now properly enclosed in script tags
+
+###2025.10.08.6
+- Fixed dropdown pre-selection: Config values now properly pre-select in dropdowns
+- Fixed ignore disks dropdown: Now shows ALL available disks instead of just ignore_disks
+- Added custom mk_disk_option function for proper space-separated value handling
+- Enhanced disk selection functionality with correct state preservation
+
 ###2025.10.08.5
 - Version format change to improve Unraid update detection
 - Same fixes as 2025.10.08e with better version numbering
