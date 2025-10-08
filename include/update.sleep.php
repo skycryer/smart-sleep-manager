@@ -14,8 +14,11 @@ $config_file = "/boot/config/plugins/$plugin/$plugin.cfg";
 $enabled = $_POST['enabled'] ?? 'false';
 $idle_time_minutes = (int)($_POST['idle_time_minutes'] ?? 15);
 $sleep_method = $_POST['sleep_method'] ?? 'dynamix_s3';
-$array_disks_list = $_POST['array_disks_list'] ?? '';
-$ignore_disks_list = $_POST['ignore_disks_list'] ?? '';
+
+// Handle both new and old field names for backward compatibility
+$monitor_disks_list = $_POST['monitor_disks_list'] ?? $_POST['array_disks_list'] ?? '';
+$array_disks_list = $monitor_disks_list; // For backward compatibility in config
+
 $network_monitoring = $_POST['network_monitoring'] ?? 'true';
 $network_interface = $_POST['network_interface'] ?? 'eth0';
 $network_threshold = (int)($_POST['network_threshold'] ?? 102400);
@@ -54,8 +57,8 @@ $config_content = [
     "enabled=\"$enabled\"",
     "idle_time_minutes=\"$idle_time_minutes\"",
     "sleep_method=\"$sleep_method\"",
-    "array_disks=\"$array_disks_list\"",
-    "ignore_disks=\"$ignore_disks_list\"",
+    "monitor_disks=\"$monitor_disks_list\"",
+    "array_disks=\"$array_disks_list\"", // Keep for backward compatibility
     "network_monitoring=\"$network_monitoring\"",
     "network_interface=\"$network_interface\"",
     "network_threshold=\"$network_threshold\"",

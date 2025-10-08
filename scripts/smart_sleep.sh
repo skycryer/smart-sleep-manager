@@ -25,8 +25,8 @@ load_config() {
     ENABLED="true"
     IDLE_TIME_MINUTES=15
     SLEEP_METHOD="dynamix_s3"
-    ARRAY_DISKS=""
-    IGNORE_DISKS=""
+    MONITOR_DISKS=""
+    ARRAY_DISKS=""  # Keep for backward compatibility
     NETWORK_MONITORING="true"
     NETWORK_INTERFACE="eth0"
     NETWORK_THRESHOLD_BYTES=102400
@@ -50,8 +50,8 @@ load_config() {
                 enabled) ENABLED="$value" ;;
                 idle_time_minutes) IDLE_TIME_MINUTES="$value" ;;
                 sleep_method) SLEEP_METHOD="$value" ;;
-                array_disks) ARRAY_DISKS="$value" ;;
-                ignore_disks) IGNORE_DISKS="$value" ;;
+                monitor_disks) MONITOR_DISKS="$value" ;;
+                array_disks) ARRAY_DISKS="$value" ;;  # Backward compatibility
                 network_monitoring) NETWORK_MONITORING="$value" ;;
                 network_interface) NETWORK_INTERFACE="$value" ;;
                 network_threshold) NETWORK_THRESHOLD_BYTES="$value" ;;
@@ -70,9 +70,16 @@ load_config() {
     fi
     
     # Auto-detect array disks if not configured
-    if [ -z "$ARRAY_DISKS" ]; then
-        ARRAY_DISKS=$(lsblk -d -n -o NAME,TYPE | grep disk | awk '{print $1}' | tr '\n' ' ')
-        log_message "Auto-detected array disks: $ARRAY_DISKS"
+    # Use monitor_disks if available, fall back to array_disks for backward compatibility
+    if [ -z "$MONITOR_DISKS" ] && [ -n "$ARRAY_DISKS" ]; then
+        MONITOR_DISKS="$ARRAY_DISKS"
+    fi
+    
+    if [ -z "$MONITOR_DISKS" ]; then
+        MONITOR_DISKS=$(lsblk -d -n -o NAME,TYPE | grep disk | awk '{print $1}' | tr '\n' ' ')
+        log_message "Auto-detected monitor disks: $MONITOR_DISKS"
+    else
+        log_message "Using configured monitor disks: $MONITOR_DISKS"
     fi
 }
 
@@ -244,14 +251,9 @@ check_array_status() {
 check_array_activity() {
     local active_disks=()
     
-    log_message "=== Array Disk Standby Check ==="
+    log_message "=== Monitor Disk Standby Check ==="
     
-    for disk_name in $ARRAY_DISKS; do
-        # Skip if disk is in ignore list
-        if [[ " $IGNORE_DISKS " =~ " $disk_name " ]]; then
-            log_message "Ignoring disk: $disk_name (in ignore list)"
-            continue
-        fi
+    for disk_name in $MONITOR_DISKS; do
         
         # Check if disk device exists
         if [ ! -b "/dev/$disk_name" ]; then

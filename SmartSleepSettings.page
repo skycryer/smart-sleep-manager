@@ -80,8 +80,12 @@ $all_available_disks = $all_disks;
 // error_log("DEBUG: ignore_disks config = " . ($cfg['ignore_disks'] ?? 'not set'));
 
 // Convert config strings to arrays for easier checking
-$selected_array_disks = empty($cfg['array_disks']) ? [] : explode(' ', trim($cfg['array_disks']));
-$selected_ignore_disks = empty($cfg['ignore_disks']) ? [] : explode(' ', trim($cfg['ignore_disks']));
+$selected_monitor_disks = empty($cfg['monitor_disks']) ? [] : explode(' ', trim($cfg['monitor_disks']));
+
+// For backwards compatibility, if old array_disks config exists, use it
+if (empty($cfg['monitor_disks']) && !empty($cfg['array_disks'])) {
+    $selected_monitor_disks = explode(' ', trim($cfg['array_disks']));
+}
 
 // Get network interfaces
 exec("ip link show | grep -E '^[0-9]+:' | awk -F': ' '{print \$2}' | grep -v lo", $network_interfaces);
@@ -103,23 +107,14 @@ function validateForm(form) {
         return false;
     }
     
-    // Prepare array disks selection
-    var arrayDisks = [];
-    for (var i=0; item=form.array_disks.options[i]; i++) {
+    // Prepare monitor disks selection
+    var monitorDisks = [];
+    for (var i=0; item=form.monitor_disks.options[i]; i++) {
         if (item.selected) {
-            arrayDisks.push(item.value);
+            monitorDisks.push(item.value);
         }
     }
-    form.array_disks_list.value = arrayDisks.join(' ');
-    
-    // Prepare ignore disks selection
-    var ignoreDisks = [];
-    for (var i=0; item=form.ignore_disks.options[i]; i++) {
-        if (item.selected) {
-            ignoreDisks.push(item.value);
-        }
-    }
-    form.ignore_disks_list.value = ignoreDisks.join(' ');
+    form.monitor_disks_list.value = monitorDisks.join(' ');
     
     return true;
 }
@@ -182,15 +177,13 @@ $(function() {
     // Check if dropdownchecklist plugin is available
     if ($.fn.dropdownchecklist) {
         try {
-            // Initialize dropdowns
-            $("#array_disks_select").dropdownchecklist({emptyText:'None', width:200, explicitClose:'...close'});
-            $("#ignore_disks_select").dropdownchecklist({emptyText:'None', width:200, explicitClose:'...close'});
+            // Initialize dropdown
+            $("#monitor_disks_select").dropdownchecklist({emptyText:'None', width:200, explicitClose:'...close'});
             
             // Refresh after a short delay
             setTimeout(function() {
                 try {
-                    $("#array_disks_select").dropdownchecklist("refresh");
-                    $("#ignore_disks_select").dropdownchecklist("refresh");
+                    $("#monitor_disks_select").dropdownchecklist("refresh");
                 } catch(e) {
                     console.log('Dropdown refresh failed:', e);
                 }
@@ -207,8 +200,7 @@ $(function() {
 <form markdown="1" name="smart_sleep_settings" method="POST" action="/update.php" target="progressFrame" onsubmit="return validateForm(this)">
 <input type="hidden" name="#file" value="<?=$plugin?>/<?=$plugin?>.cfg">
 <input type="hidden" name="#include" value="plugins/<?=$plugin?>/include/update.sleep.php">
-<input type="hidden" name="array_disks_list" value="">
-<input type="hidden" name="ignore_disks_list" value="">
+<input type="hidden" name="monitor_disks_list" value="">
 
 <div style="width: 100%; margin-bottom: 20px;">
     <h2>🌙 Smart Sleep Manager Configuration</h2>
@@ -238,25 +230,16 @@ _(Sleep Method)_:
 
 > Sleep method to use. Dynamix S3 is recommended as it includes proper WOL setup and post-wake activities.
 
-## 💾 Array Disk Monitoring
+## 💾 Disk Monitoring
 
-_(Array Disks to Monitor)_:
-: <select id="array_disks_select" name="array_disks" multiple style="width: 200px; height: 100px;">
+_(Disks to Monitor)_:
+: <select id="monitor_disks_select" name="monitor_disks" multiple style="width: 200px; height: 120px;">
   <?foreach ($all_available_disks as $disk):?>
-  <option value="<?=$disk?>"<?=in_array($disk, $selected_array_disks) ? ' selected' : ''?>><?=$disk?></option>
+  <option value="<?=$disk?>"<?=in_array($disk, $selected_monitor_disks) ? ' selected' : ''?>><?=$disk?></option>
   <?endforeach;?>
   </select>
 
-> Select which disks must be in standby before sleep is allowed. All available disks are shown.
-
-_(Disks to Ignore)_:
-: <select id="ignore_disks_select" name="ignore_disks" multiple style="width: 200px; height: 100px;">
-  <?foreach ($all_available_disks as $disk):?>
-  <option value="<?=$disk?>"<?=in_array($disk, $selected_ignore_disks) ? ' selected' : ''?>><?=$disk?></option>
-  <?endforeach;?>
-  </select>
-
-> Select disks to ignore (will not prevent sleep even if active). All available disks are shown.
+> Select which disks must be in standby before sleep is allowed. All other disks will be ignored and won't prevent sleep.
 
 ## 🌐 Network Monitoring
 
