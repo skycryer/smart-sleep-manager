@@ -175,8 +175,17 @@ function runSleepCheck() {
 }
 
 $(function() {
-    $("#array_disks_select").dropdownchecklist({emptyText:'None', width:200, explicitClose:'...close'});
-    $("#ignore_disks_select").dropdownchecklist({emptyText:'None', width:200, explicitClose:'...close'});
+    // Check if dropdownchecklist plugin is available
+    if ($.fn.dropdownchecklist) {
+        try {
+            $("#array_disks_select").dropdownchecklist({emptyText:'None', width:200, explicitClose:'...close'});
+            $("#ignore_disks_select").dropdownchecklist({emptyText:'None', width:200, explicitClose:'...close'});
+        } catch(e) {
+            console.log('Dropdownchecklist plugin not working, using standard selects');
+        }
+    } else {
+        console.log('Dropdownchecklist plugin not available, using standard selects');
+    }
 });
 </script>
 
@@ -217,7 +226,7 @@ _(Sleep Method)_:
 ## 💾 Array Disk Monitoring
 
 _(Array Disks to Monitor)_:
-: <select id="array_disks_select" name="array_disks" style="display:none" multiple>
+: <select id="array_disks_select" name="array_disks" multiple style="width: 200px; height: 100px;">
   <?foreach ($array_disks as $disk):?>
   <?=mk_option_check($cfg['array_disks'], $disk, "/dev/$disk")?>
   <?endforeach;?>
@@ -226,7 +235,7 @@ _(Array Disks to Monitor)_:
 > Select which array disks must be in standby before sleep is allowed. Only actual array disks are shown here.
 
 _(Disks to Ignore)_:
-: <select id="ignore_disks_select" name="ignore_disks" style="display:none" multiple>
+: <select id="ignore_disks_select" name="ignore_disks" multiple style="width: 200px; height: 100px;">
   <?foreach ($other_disks as $disk):?>
   <?=mk_option_check($cfg['ignore_disks'], $disk, "/dev/$disk (Cache/Docker/Parity)")?>
   <?endforeach;?>
@@ -362,8 +371,17 @@ _(Cron Schedule)_:
 $(function() {
     // Initialize dropdowns after DOM is ready
     setTimeout(function() {
-        $("#array_disks_select").dropdownchecklist("refresh");
-        $("#ignore_disks_select").dropdownchecklist("refresh");
+        // Only refresh if dropdownchecklist plugin is available
+        if ($.fn.dropdownchecklist) {
+            try {
+                $("#array_disks_select").dropdownchecklist("refresh");
+                $("#ignore_disks_select").dropdownchecklist("refresh");
+            } catch(e) {
+                // If refresh fails, show normal selects
+                $("#array_disks_select").show().css('display', 'block');
+                $("#ignore_disks_select").show().css('display', 'block');
+            }
+        }
     }, 100);
 });
 </script>
