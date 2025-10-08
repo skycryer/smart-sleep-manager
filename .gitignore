@@ -42,7 +42,8 @@ secrets.txt
 
 # Test files (but not plugin test files)
 test_output*
-debug_*
+debug_output*
+debug_temp*
 
 # Local development files
 test_server.py
