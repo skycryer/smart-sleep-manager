@@ -141,6 +141,7 @@ function testTelegram(form) {
             button.disabled = false;
             
             if (xhr.status === 200) {
+                console.log('Raw response:', xhr.responseText);
                 try {
                     var response = JSON.parse(xhr.responseText);
                     if (response.success) {
@@ -149,7 +150,9 @@ function testTelegram(form) {
                         alert('❌ Telegram test failed: ' + response.error);
                     }
                 } catch (e) {
-                    alert('❌ Telegram test failed: Invalid response from server');
+                    console.error('JSON parse error:', e);
+                    console.error('Response text:', xhr.responseText);
+                    alert('❌ Telegram test failed: Invalid response from server\n\nResponse: ' + xhr.responseText.substring(0, 200));
                 }
             } else {
                 alert('❌ Network error during Telegram test (HTTP ' + xhr.status + ')');
