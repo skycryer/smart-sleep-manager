@@ -3,7 +3,7 @@
 <!ENTITY name "smart.sleep.manager">
 <!ENTITY displayname "Smart Sleep Manager">
 <!ENTITY author "SkyCryer">
-<!ENTITY version "2025.10.09.9">
+<!ENTITY version "2025.10.09.10">
 <!ENTITY launch "Settings/SmartSleepSettings">
 <!ENTITY gitURL "https://raw.githubusercontent.com/skycryer/smart-sleep-manager/main">
 <!ENTITY pluginURL "&gitURL;/smart.sleep.manager.plg">
