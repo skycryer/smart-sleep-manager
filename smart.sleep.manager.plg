@@ -1,141 +1,280 @@
-<?xml version="1.0" standalone="yes"?>
-<!DOCTYPE PLUGIN [
-<!ENTITY name      "smart.sleep.manager">
-<!ENTITY author    "Smart Sleep Manager Team">
-<!ENTITY version   "2025.01.01">
-<!ENTITY launch    "Settings/SmartSleepSettings">
-<!ENTITY pluginURL "https://raw.githubusercontent.com/skycryer/smart-sleep-manager/main/smart.sleep.manager.plg">
-]>
+<?xml version="1.0" standalone="yes"?><?xml version="1.0" standalone="yes"?>
 
-<PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" min="6.12.0">
+<!DOCTYPE PLUGIN [<!DOCTYPE PLUGIN [
 
-<CHANGES>
-###2025.01.01
-- Initial release
-- Automated sleep management with array disk monitoring
-- Network activity monitoring
-- Telegram notifications
-- Web-based configuration interface
-- Based on Dynamix S3 Sleep methodology
-</CHANGES>
+<!ENTITY name      "smart.sleep.manager"><!ENTITY name      "smart.sleep.manager">
 
-<!--
-###############################################
-# REMOVE OLD PLUGIN
-###############################################
--->
+<!ENTITY author    "Smart Sleep Manager Team"><!ENTITY author    "Smart Sleep Manager Team">
 
-<FILE Run="/bin/bash">
-<INLINE>
-# Remove old plugin files
-rm -rf /usr/local/emhttp/plugins/&name;
+<!ENTITY version   "2025.01.01"><!ENTITY version   "2025.01.01">
 
-# Create plugin directory structure
-mkdir -p /usr/local/emhttp/plugins/&name;/{include,scripts,icons,images}
-mkdir -p /boot/config/plugins/&name;
+<!ENTITY launch    "Settings/SmartSleepSettings"><!ENTITY launch    "Settings/SmartSleepSettings">
 
-echo "Plugin directories created"
-</INLINE>
+<!ENTITY gitURL    "https://raw.githubusercontent.com/skycryer/smart-sleep-manager/main"><!ENTITY gitURL    "https://raw.githubusercontent.com/skycryer/smart-sleep-manager/main">
+
+<!ENTITY pluginURL "&gitURL;/smart.sleep.manager.plg"><!ENTITY pluginURL "&gitURL;/smart.sleep.manager.plg">
+
+]>]>
+
+
+
+<PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" min="6.12.0"><PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" min="6.12.0">
+
+
+
+<CHANGES><CHANGES>
+
+###2025.01.01###2025.01.01
+
+- Initial release- Initial release
+
+- Automated sleep management with array disk monitoring- Automated sleep management with array disk monitoring
+
+- Network activity monitoring- Network activity monitoring
+
+- Telegram notifications- Telegram notifications
+
+- Web-based configuration interface- Web-based configuration interface
+
+- Based on Dynamix S3 Sleep methodology- Based on Dynamix S3 Sleep methodology
+
+</CHANGES></CHANGES>
+
+
+
+<!--<!--
+
+##############################################################################################
+
+# REMOVE OLD PLUGIN# REMOVE OLD PLUGIN
+
+##############################################################################################
+
+-->-->
+
+
+
+<FILE Run="/bin/bash"><FILE Run="/bin/bash">
+
+<INLINE><INLINE>
+
+# Remove old plugin files# Remove old plugin files
+
+rm -rf /usr/local/emhttp/plugins/&name;rm -rf /usr/local/emhttp/plugins/&name;
+
+
+
+# Create plugin directory structure# Create plugin directory structure
+
+mkdir -p /usr/local/emhttp/plugins/&name;/{include,scripts,icons,images}mkdir -p /usr/local/emhttp/plugins/&name;/{include,scripts,icons,images}
+
+mkdir -p /boot/config/plugins/&name;mkdir -p /boot/config/plugins/&name;
+
+
+
+echo "Plugin directories created"echo "Plugin directories created"
+
+</INLINE></INLINE>
+
+</FILE></FILE>
+
+
+
+<!--<!--
+
+##############################################################################################
+
+# DOWNLOAD PLUGIN FILES FROM GITHUB# DOWNLOAD PLUGIN FILES FROM GITHUB
+
+##############################################################################################
+
+-->-->
+
+
+
+<FILE Name="/usr/local/emhttp/plugins/&name;/default.cfg"><FILE Name="/usr/local/emhttp/plugins/&name;/SmartSleepSettings.page">
+
+<URL>&gitURL;/default.cfg</URL><INLINE>
+
+</FILE><![CDATA[
+
+Menu="Settings"
+
+<FILE Name="/usr/local/emhttp/plugins/&name;/SmartSleepSettings.page">Title="Smart Sleep Manager"
+
+<URL>&gitURL;/SmartSleepSettings.page</URL>Icon="smartsleep.png"
+
+</FILE>---
+
+<?PHP
+
+<FILE Name="/usr/local/emhttp/plugins/&name;/SleepManager.php">/* Smart Sleep Manager Plugin for Unraid
+
+<URL>&gitURL;/SleepManager.php</URL> * Automated sleep management with configurable conditions
+
+</FILE> * Based on sleepy.sh with web UI configuration
+
+ */
+
+<FILE Name="/usr/local/emhttp/plugins/&name;/include/update.sleep.php">?>
+
+<URL>&gitURL;/include/update.sleep.php</URL><?
+
+</FILE>$plugin = 'smart.sleep.manager';
+
+$scripts = "$docroot/plugins/$plugin/scripts";
+
+<FILE Name="/usr/local/emhttp/plugins/&name;/include/SleepMode.php">$config = "/boot/config/plugins/$plugin/$plugin.cfg";
+
+<URL>&gitURL;/include/SleepMode.php</URL>$cfg = parse_plugin_cfg($plugin);
+
 </FILE>
 
-<!--
-###############################################
-# INSTALL PLUGIN FILES DIRECTLY
-###############################################
--->
-
-<FILE Name="/usr/local/emhttp/plugins/&name;/SmartSleepSettings.page">
-<INLINE>
-<![CDATA[
-Menu="Settings"
-Title="Smart Sleep Manager"
-Icon="smartsleep.png"
----
-<?PHP
-/* Smart Sleep Manager Plugin for Unraid
- * Automated sleep management with configurable conditions
- * Based on sleepy.sh with web UI configuration
- */
-?>
-<?
-$plugin = 'smart.sleep.manager';
-$scripts = "$docroot/plugins/$plugin/scripts";
-$config = "/boot/config/plugins/$plugin/$plugin.cfg";
-$cfg = parse_plugin_cfg($plugin);
-
 // Get available disks
-exec("lsblk -d -n -o NAME,TYPE | grep disk | awk '{print \$1}'", $all_disks);
-exec("cat /proc/mdstat | grep -E '^md[0-9]+' | awk '{print \$1}'", $array_info);
+
+<FILE Name="/usr/local/emhttp/plugins/&name;/include/test_telegram.php">exec("lsblk -d -n -o NAME,TYPE | grep disk | awk '{print \$1}'", $all_disks);
+
+<URL>&gitURL;/include/test_telegram.php</URL>exec("cat /proc/mdstat | grep -E '^md[0-9]+' | awk '{print \$1}'", $array_info);
+
+</FILE>
 
 // Get network interfaces
-exec("ip link show | grep -E '^[0-9]+:' | awk -F': ' '{print \$2}' | grep -v lo", $network_interfaces);
 
-function is_array_disk($disk, $array_info) {
+<FILE Name="/usr/local/emhttp/plugins/&name;/scripts/smart_sleep.sh" Mode="0755">exec("ip link show | grep -E '^[0-9]+:' | awk -F': ' '{print \$2}' | grep -v lo", $network_interfaces);
+
+<URL>&gitURL;/scripts/smart_sleep.sh</URL>
+
+</FILE>function is_array_disk($disk, $array_info) {
+
     foreach ($array_info as $md) {
-        $details = exec("cat /proc/mdstat | grep -A1 '$md' | tail -1");
-        if (strpos($details, $disk) !== false) {
-            return true;
-        }
-    }
-    return false;
-}
 
-// Separate array disks from others
-$array_disks = [];
-$other_disks = [];
-foreach ($all_disks as $disk) {
-    if (is_array_disk($disk, $array_info)) {
+<FILE Name="/usr/local/emhttp/plugins/&name;/scripts/preRun" Mode="0755">        $details = exec("cat /proc/mdstat | grep -A1 '$md' | tail -1");
+
+<URL>&gitURL;/scripts/preRun</URL>        if (strpos($details, $disk) !== false) {
+
+</FILE>            return true;
+
+        }
+
+<FILE Name="/usr/local/emhttp/plugins/&name;/scripts/postRun" Mode="0755">    }
+
+<URL>&gitURL;/scripts/postRun</URL>    return false;
+
+</FILE>}
+
+
+
+<!--// Separate array disks from others
+
+###############################################$array_disks = [];
+
+# INSTALL SCRIPT$other_disks = [];
+
+###############################################foreach ($all_disks as $disk) {
+
+-->    if (is_array_disk($disk, $array_info)) {
+
         $array_disks[] = $disk;
-    } else {
-        $other_disks[] = $disk;
-    }
-}
-?>
 
-<script>
-function validateForm(form) {
-    // Validate idle time
-    var idleTime = parseInt(form.idle_time_minutes.value);
-    if (isNaN(idleTime) || idleTime < 1 || idleTime > 1440) {
-        alert('Idle time must be between 1 and 1440 minutes');
-        return false;
-    }
-    
-    // Validate network threshold
-    var threshold = parseInt(form.network_threshold.value);
-    if (isNaN(threshold) || threshold < 0) {
-        alert('Network threshold must be a positive number');
-        return false;
-    }
-    
-    // Prepare array disks selection
-    var arrayDisks = [];
-    for (var i=0; item=form.array_disks.options[i]; i++) {
-        if (item.selected) {
-            arrayDisks.push(item.value);
-        }
-    }
-    form.array_disks_list.value = arrayDisks.join(' ');
-    
-    // Prepare ignore disks selection
-    var ignoreDisks = [];
-    for (var i=0; item=form.ignore_disks.options[i]; i++) {
-        if (item.selected) {
-            ignoreDisks.push(item.value);
-        }
-    }
-    form.ignore_disks_list.value = ignoreDisks.join(' ');
-    
-    return true;
+<FILE Run="/bin/bash">    } else {
+
+<INLINE>        $other_disks[] = $disk;
+
+echo "Installing Smart Sleep Manager..."    }
+
 }
+
+# Create necessary directories?>
+
+mkdir -p /boot/config/plugins/&name;
+
+mkdir -p /usr/local/emhttp/plugins/&name;/{include,scripts}<script>
+
+function validateForm(form) {
+
+# Copy default configuration if it doesn't exist    // Validate idle time
+
+if [ ! -f /boot/config/plugins/&name;/&name;.cfg ]; then    var idleTime = parseInt(form.idle_time_minutes.value);
+
+  cp /usr/local/emhttp/plugins/&name;/default.cfg /boot/config/plugins/&name;/&name;.cfg    if (isNaN(idleTime) || idleTime < 1 || idleTime > 1440) {
+
+fi        alert('Idle time must be between 1 and 1440 minutes');
+
+        return false;
+
+# Set correct permissions    }
+
+chmod +x /usr/local/emhttp/plugins/&name;/scripts/*    
+
+    // Validate network threshold
+
+# Install cron job for automated sleep checking    var threshold = parseInt(form.network_threshold.value);
+
+CRON_JOB="*/5 * * * * /usr/local/emhttp/plugins/&name;/scripts/smart_sleep.sh >/dev/null 2>&1"    if (isNaN(threshold) || threshold < 0) {
+
+if ! crontab -l 2>/dev/null | grep -q "smart_sleep.sh"; then        alert('Network threshold must be a positive number');
+
+  (crontab -l 2>/dev/null; echo "$CRON_JOB") | crontab -        return false;
+
+  echo "Cron job installed: Check every 5 minutes"    }
+
+fi    
+
+    // Prepare array disks selection
+
+echo "Smart Sleep Manager installed successfully!"    var arrayDisks = [];
+
+echo "Access settings via: Settings > Smart Sleep Manager"    for (var i=0; item=form.array_disks.options[i]; i++) {
+
+</INLINE>        if (item.selected) {
+
+</FILE>            arrayDisks.push(item.value);
+
+        }
+
+<!--    }
+
+###############################################    form.array_disks_list.value = arrayDisks.join(' ');
+
+# REMOVE SCRIPT    
+
+###############################################    // Prepare ignore disks selection
+
+-->    var ignoreDisks = [];
+
+    for (var i=0; item=form.ignore_disks.options[i]; i++) {
+
+<FILE Run="/bin/bash" Method="remove">        if (item.selected) {
+
+<INLINE>            ignoreDisks.push(item.value);
+
+echo "Removing Smart Sleep Manager..."        }
+
+    }
+
+# Remove cron job    form.ignore_disks_list.value = ignoreDisks.join(' ');
+
+crontab -l 2>/dev/null | grep -v "smart_sleep.sh" | crontab -    
+
+    return true;
+
+# Remove plugin files}
+
+rm -rf /usr/local/emhttp/plugins/&name;
 
 function testTelegram(form) {
-    if (!form.telegram_bot_token.value || !form.telegram_chat_id.value) {
-        alert('Please enter both Bot Token and Chat ID to test Telegram');
-        return;
-    }
+
+echo "Smart Sleep Manager removed successfully!"    if (!form.telegram_bot_token.value || !form.telegram_chat_id.value) {
+
+echo "Configuration preserved in /boot/config/plugins/&name;/"        alert('Please enter both Bot Token and Chat ID to test Telegram');
+
+</INLINE>        return;
+
+</FILE>    }
+
     
-    var xhr = new XMLHttpRequest();
+
+</PLUGIN>    var xhr = new XMLHttpRequest();
     xhr.open('POST', '/plugins/<?=$plugin?>/include/test_telegram.php', true);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     xhr.onreadystatechange = function() {
