@@ -42,4 +42,7 @@ secrets.txt
 
 # Test files
 test_*
-debug_*smart.sleep.manager.cfg
+debug_*
+
+# Personal configuration with Telegram credentials
+smart.sleep.manager.cfg
