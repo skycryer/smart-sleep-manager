@@ -40,8 +40,8 @@ config.local
 .env
 secrets.txt
 
-# Test files
-test_*
+# Test files (but not plugin test files)
+test_output*
 debug_*
 
 # Personal configuration with Telegram credentials
