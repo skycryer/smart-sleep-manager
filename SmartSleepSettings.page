@@ -166,7 +166,6 @@ function runSleepCheck() {
     }
 }
 
-<script>
 $(function() {
     // Check if dropdownchecklist plugin is available
     if ($.fn.dropdownchecklist) {
