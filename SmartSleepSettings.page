@@ -79,6 +79,10 @@ $all_available_disks = $all_disks;
 // error_log("DEBUG: array_disks config = " . ($cfg['array_disks'] ?? 'not set'));
 // error_log("DEBUG: ignore_disks config = " . ($cfg['ignore_disks'] ?? 'not set'));
 
+// Convert config strings to arrays for easier checking
+$selected_array_disks = empty($cfg['array_disks']) ? [] : explode(' ', trim($cfg['array_disks']));
+$selected_ignore_disks = empty($cfg['ignore_disks']) ? [] : explode(' ', trim($cfg['ignore_disks']));
+
 // Get network interfaces
 exec("ip link show | grep -E '^[0-9]+:' | awk -F': ' '{print \$2}' | grep -v lo", $network_interfaces);
 ?>
@@ -239,7 +243,7 @@ _(Sleep Method)_:
 _(Array Disks to Monitor)_:
 : <select id="array_disks_select" name="array_disks" multiple style="width: 200px; height: 100px;">
   <?foreach ($all_available_disks as $disk):?>
-  <?=mk_option_check($cfg['array_disks'], $disk, $disk)?>
+  <option value="<?=$disk?>"<?=in_array($disk, $selected_array_disks) ? ' selected' : ''?>><?=$disk?></option>
   <?endforeach;?>
   </select>
 
@@ -248,7 +252,7 @@ _(Array Disks to Monitor)_:
 _(Disks to Ignore)_:
 : <select id="ignore_disks_select" name="ignore_disks" multiple style="width: 200px; height: 100px;">
   <?foreach ($all_available_disks as $disk):?>
-  <?=mk_option_check($cfg['ignore_disks'], $disk, $disk)?>
+  <option value="<?=$disk?>"<?=in_array($disk, $selected_ignore_disks) ? ' selected' : ''?>><?=$disk?></option>
   <?endforeach;?>
   </select>
 
