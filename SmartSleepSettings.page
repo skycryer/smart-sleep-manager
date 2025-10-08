@@ -152,14 +152,6 @@ function testTelegram(form) {
     xhr.send('bot_token=' + encodeURIComponent(form.telegram_bot_token.value) + 
              '&chat_id=' + encodeURIComponent(form.telegram_chat_id.value));
 }
-            } else {
-                alert('❌ Network error during Telegram test');
-            }
-        }
-    };
-    xhr.send('bot_token=' + encodeURIComponent(form.telegram_bot_token.value) + 
-             '&chat_id=' + encodeURIComponent(form.telegram_chat_id.value));
-}
 
 function runSleepCheck() {
     if (confirm('Run sleep check now? This will execute the sleep logic once manually.')) {
@@ -174,14 +166,26 @@ function runSleepCheck() {
     }
 }
 
+<script>
 $(function() {
     // Check if dropdownchecklist plugin is available
     if ($.fn.dropdownchecklist) {
         try {
+            // Initialize dropdowns
             $("#array_disks_select").dropdownchecklist({emptyText:'None', width:200, explicitClose:'...close'});
             $("#ignore_disks_select").dropdownchecklist({emptyText:'None', width:200, explicitClose:'...close'});
+            
+            // Refresh after a short delay
+            setTimeout(function() {
+                try {
+                    $("#array_disks_select").dropdownchecklist("refresh");
+                    $("#ignore_disks_select").dropdownchecklist("refresh");
+                } catch(e) {
+                    console.log('Dropdown refresh failed:', e);
+                }
+            }, 500);
         } catch(e) {
-            console.log('Dropdownchecklist plugin not working, using standard selects');
+            console.log('Dropdownchecklist plugin initialization failed:', e);
         }
     } else {
         console.log('Dropdownchecklist plugin not available, using standard selects');
@@ -366,22 +370,3 @@ _(Cron Schedule)_:
 : <input type="submit" name="#apply" value="Apply"><input type="button" value="Done" onclick="done()">
 
 </form>
-
-<script>
-$(function() {
-    // Initialize dropdowns after DOM is ready
-    setTimeout(function() {
-        // Only refresh if dropdownchecklist plugin is available
-        if ($.fn.dropdownchecklist) {
-            try {
-                $("#array_disks_select").dropdownchecklist("refresh");
-                $("#ignore_disks_select").dropdownchecklist("refresh");
-            } catch(e) {
-                // If refresh fails, show normal selects
-                $("#array_disks_select").show().css('display', 'block');
-                $("#ignore_disks_select").show().css('display', 'block');
-            }
-        }
-    }, 100);
-});
-</script>
