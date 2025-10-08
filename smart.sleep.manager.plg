@@ -27,9 +27,9 @@
 <FILE Run="/bin/bash">
 <INLINE>
 echo "Installing Smart Sleep Manager..."
-rm -rf /usr/local/emhttp/plugins/&name;
-mkdir -p /usr/local/emhttp/plugins/&name;/{include,scripts,icons,images}
-mkdir -p /boot/config/plugins/&name;
+rm -rf /usr/local/emhttp/plugins/smart.sleep.manager
+mkdir -p /usr/local/emhttp/plugins/smart.sleep.manager/{include,scripts,icons,images}
+mkdir -p /boot/config/plugins/smart.sleep.manager
 echo "Plugin directories created"
 </INLINE>
 </FILE>
@@ -73,12 +73,12 @@ echo "Plugin directories created"
 <FILE Run="/bin/bash">
 <INLINE>
 echo "Configuring Smart Sleep Manager..."
-if [ ! -f /boot/config/plugins/&name;/&name;.cfg ]; then
-  cp /usr/local/emhttp/plugins/&name;/default.cfg /boot/config/plugins/&name;/&name;.cfg
+if [ ! -f /boot/config/plugins/smart.sleep.manager/smart.sleep.manager.cfg ]; then
+  cp /usr/local/emhttp/plugins/smart.sleep.manager/default.cfg /boot/config/plugins/smart.sleep.manager/smart.sleep.manager.cfg
   echo "Default configuration copied"
 fi
-chmod +x /usr/local/emhttp/plugins/&name;/scripts/* 2>/dev/null || true
-CRON_JOB="*/5 * * * * /usr/local/emhttp/plugins/&name;/scripts/smart_sleep.sh >/dev/null 2>&1"
+chmod +x /usr/local/emhttp/plugins/smart.sleep.manager/scripts/* 2>/dev/null || true
+CRON_JOB="*/5 * * * * /usr/local/emhttp/plugins/smart.sleep.manager/scripts/smart_sleep.sh >/dev/null 2>&1"
 if ! crontab -l 2>/dev/null | grep -q "smart_sleep.sh"; then
   (crontab -l 2>/dev/null; echo "$CRON_JOB") | crontab -
   echo "Cron job installed: Check every 5 minutes"
@@ -94,9 +94,9 @@ echo "Access settings via: Settings > Smart Sleep Manager"
 <INLINE>
 echo "Removing Smart Sleep Manager..."
 crontab -l 2>/dev/null | grep -v "smart_sleep.sh" | crontab - 2>/dev/null || true
-rm -rf /usr/local/emhttp/plugins/&name;
+rm -rf /usr/local/emhttp/plugins/smart.sleep.manager
 echo "Smart Sleep Manager removed successfully!"
-echo "Configuration preserved in /boot/config/plugins/&name;/"
+echo "Configuration preserved in /boot/config/plugins/smart.sleep.manager/"
 </INLINE>
 </FILE>
 
