@@ -44,5 +44,9 @@ secrets.txt
 test_output*
 debug_*
 
+# Local development files
+test_server.py
+test_local.html
+
 # Personal configuration with Telegram credentials
 smart.sleep.manager.cfg
