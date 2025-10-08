@@ -2,7 +2,7 @@
 <!DOCTYPE PLUGIN [
 <!ENTITY name      "smart.sleep.manager">
 <!ENTITY author    "Smart Sleep Manager Team">
-<!ENTITY version   "2025.10.08">
+<!ENTITY version   "2025.10.08a">
 <!ENTITY launch    "Settings/SmartSleepSettings">
 <!ENTITY gitURL    "https://raw.githubusercontent.com/skycryer/smart-sleep-manager/main">
 <!ENTITY pluginURL "&gitURL;/smart.sleep.manager.plg">
@@ -11,6 +11,11 @@
 <PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" min="6.12.0">
 
 <CHANGES>
+###2025.10.08a
+- Fixed XML ampersand escaping issue
+- Resolved 'xml parse error' during Unraid installation
+- All entities properly escaped in CDATA sections
+
 ###2025.10.08
 - Fixed XML parse error by using external file downloads
 - Clean plugin structure with minimal inline content
