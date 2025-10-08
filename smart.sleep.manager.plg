@@ -1,78 +1,73 @@
-<?xml version="1.0" standalone="yes"?>
+<?xml version='1.0' standalone='yes'?>
 <!DOCTYPE PLUGIN [
-<!ENTITY name      "smart.sleep.manager">
-<!ENTITY author    "Smart Sleep Manager Team">
-<!ENTITY version   "2025.10.08a">
-<!ENTITY launch    "Settings/SmartSleepSettings">
-<!ENTITY gitURL    "https://raw.githubusercontent.com/skycryer/smart-sleep-manager/main">
+<!ENTITY name "smart.sleep.manager">
+<!ENTITY author "Smart Sleep Manager Team">
+<!ENTITY version "2025.10.08b">
+<!ENTITY launch "Settings/SmartSleepSettings">
+<!ENTITY gitURL "https://raw.githubusercontent.com/skycryer/smart-sleep-manager/main">
 <!ENTITY pluginURL "&gitURL;/smart.sleep.manager.plg">
 ]>
 
 <PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" min="6.12.0">
 
 <CHANGES>
+###2025.10.08b
+- Simplified XML structure to resolve parse errors
+- Using single quotes for XML attributes
+- Minimal CDATA sections
+
 ###2025.10.08a
 - Fixed XML ampersand escaping issue
-- Resolved 'xml parse error' during Unraid installation
-- All entities properly escaped in CDATA sections
-
-###2025.10.08
-- Fixed XML parse error by using external file downloads
-- Clean plugin structure with minimal inline content
-
-###2025.01.01
-- Initial release
-- Automated sleep management with array disk monitoring
-- Network activity monitoring
-- Telegram notifications
-- Web-based configuration interface
-- Based on Dynamix S3 Sleep methodology
+- Resolved xml parse error during Unraid installation
 </CHANGES>
 
 <FILE Run="/bin/bash">
 <INLINE>
 echo "Installing Smart Sleep Manager..."
 rm -rf /usr/local/emhttp/plugins/smart.sleep.manager
-mkdir -p /usr/local/emhttp/plugins/smart.sleep.manager/{include,scripts,icons,images}
+mkdir -p /usr/local/emhttp/plugins/smart.sleep.manager/include
+mkdir -p /usr/local/emhttp/plugins/smart.sleep.manager/scripts
+mkdir -p /usr/local/emhttp/plugins/smart.sleep.manager/icons
+mkdir -p /usr/local/emhttp/plugins/smart.sleep.manager/images
 mkdir -p /boot/config/plugins/smart.sleep.manager
 echo "Plugin directories created"
 </INLINE>
 </FILE>
 
-<FILE Name="/usr/local/emhttp/plugins/&name;/default.cfg">
-<URL>&gitURL;/default.cfg</URL>
+<FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/default.cfg">
+<URL>https://raw.githubusercontent.com/skycryer/smart-sleep-manager/main/default.cfg</URL>
 </FILE>
 
-<FILE Name="/usr/local/emhttp/plugins/&name;/SmartSleepSettings.page">
-<URL>&gitURL;/SmartSleepSettings.page</URL>
+<FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/SmartSleepSettings.page">
+<URL>https://raw.githubusercontent.com/skycryer/smart-sleep-manager/main/SmartSleepSettings.page</URL>
 </FILE>
 
-<FILE Name="/usr/local/emhttp/plugins/&name;/SleepManager.php">
-<URL>&gitURL;/SleepManager.php</URL>
+<FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/SleepManager.php">
+<URL>https://raw.githubusercontent.com/skycryer/smart-sleep-manager/main/SleepManager.php</URL>
 </FILE>
 
-<FILE Name="/usr/local/emhttp/plugins/&name;/include/update.sleep.php">
-<URL>&gitURL;/include/update.sleep.php</URL>
+<FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/include/update.sleep.php">
+<URL>https://raw.githubusercontent.com/skycryer/smart-sleep-manager/main/include/update.sleep.php</URL>
 </FILE>
 
-<FILE Name="/usr/local/emhttp/plugins/&name;/include/SleepMode.php">
-<URL>&gitURL;/include/SleepMode.php</URL>
+<FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/include/SleepMode.php">
+<URL>https://raw.githubusercontent.com/skycryer/smart-sleep-manager/main/include/SleepMode.php</URL>
 </FILE>
 
-<FILE Name="/usr/local/emhttp/plugins/&name;/include/test_telegram.php">
-<URL>&gitURL;/include/test_telegram.php</URL>
+<FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/include/test_telegram.php">
+<URL>https://raw.githubusercontent.com/skycryer/smart-sleep-manager/main/include/test_telegram.php</URL>
 </FILE>
 
-<FILE Name="/usr/local/emhttp/plugins/&name;/scripts/smart_sleep.sh" Mode="0755">
-<URL>&gitURL;/scripts/smart_sleep.sh</URL>
+<FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/scripts/smart_sleep.sh" Mode="0755">
+<URL>https://raw.githubusercontent.com/skycryer/smart-sleep-manager/main/scripts/smart_sleep.sh</URL>
 </FILE>
 
-<FILE Name="/usr/local/emhttp/plugins/&name;/scripts/preRun" Mode="0755">
-<URL>&gitURL;/scripts/preRun</URL>
+<FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/scripts/preRun" Mode="0755">
+<URL>https://raw.githubusercontent.com/skycryer/smart-sleep-manager/main/scripts/preRun</URL>
 </FILE>
 
-<FILE Name="/usr/local/emhttp/plugins/&name;/scripts/postRun" Mode="0755">
-<URL>&gitURL;/scripts/postRun</URL>
+<FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/scripts/postRun" Mode="0755">
+<URL>https://raw.githubusercontent.com/skycryer/smart-sleep-manager/main/scripts/postRun</URL>
 </FILE>
 
 <FILE Run="/bin/bash">
@@ -82,26 +77,25 @@ if [ ! -f /boot/config/plugins/smart.sleep.manager/smart.sleep.manager.cfg ]; th
   cp /usr/local/emhttp/plugins/smart.sleep.manager/default.cfg /boot/config/plugins/smart.sleep.manager/smart.sleep.manager.cfg
   echo "Default configuration copied"
 fi
-chmod +x /usr/local/emhttp/plugins/smart.sleep.manager/scripts/* 2>/dev/null || true
-CRON_JOB="*/5 * * * * /usr/local/emhttp/plugins/smart.sleep.manager/scripts/smart_sleep.sh >/dev/null 2>&amp;1"
+chmod +x /usr/local/emhttp/plugins/smart.sleep.manager/scripts/smart_sleep.sh 2>/dev/null
+chmod +x /usr/local/emhttp/plugins/smart.sleep.manager/scripts/preRun 2>/dev/null
+chmod +x /usr/local/emhttp/plugins/smart.sleep.manager/scripts/postRun 2>/dev/null
+echo "Permissions set"
+CRONLINE="*/5 * * * * /usr/local/emhttp/plugins/smart.sleep.manager/scripts/smart_sleep.sh >/dev/null"
 if ! crontab -l 2>/dev/null | grep -q "smart_sleep.sh"; then
-  (crontab -l 2>/dev/null; echo "$CRON_JOB") | crontab -
-  echo "Cron job installed: Check every 5 minutes"
-else
-  echo "Cron job already exists"
+  (crontab -l 2>/dev/null; echo "$CRONLINE") | crontab -
+  echo "Cron job installed"
 fi
 echo "Smart Sleep Manager installed successfully!"
-echo "Access settings via: Settings > Smart Sleep Manager"
 </INLINE>
 </FILE>
 
 <FILE Run="/bin/bash" Method="remove">
 <INLINE>
 echo "Removing Smart Sleep Manager..."
-crontab -l 2>/dev/null | grep -v "smart_sleep.sh" | crontab - 2>/dev/null || true
+crontab -l 2>/dev/null | grep -v "smart_sleep.sh" | crontab - 2>/dev/null
 rm -rf /usr/local/emhttp/plugins/smart.sleep.manager
 echo "Smart Sleep Manager removed successfully!"
-echo "Configuration preserved in /boot/config/plugins/smart.sleep.manager/"
 </INLINE>
 </FILE>
 
