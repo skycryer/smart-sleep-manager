@@ -78,7 +78,7 @@ if [ ! -f /boot/config/plugins/smart.sleep.manager/smart.sleep.manager.cfg ]; th
   echo "Default configuration copied"
 fi
 chmod +x /usr/local/emhttp/plugins/smart.sleep.manager/scripts/* 2>/dev/null || true
-CRON_JOB="*/5 * * * * /usr/local/emhttp/plugins/smart.sleep.manager/scripts/smart_sleep.sh >/dev/null 2>&1"
+CRON_JOB="*/5 * * * * /usr/local/emhttp/plugins/smart.sleep.manager/scripts/smart_sleep.sh >/dev/null 2>&amp;1"
 if ! crontab -l 2>/dev/null | grep -q "smart_sleep.sh"; then
   (crontab -l 2>/dev/null; echo "$CRON_JOB") | crontab -
   echo "Cron job installed: Check every 5 minutes"
