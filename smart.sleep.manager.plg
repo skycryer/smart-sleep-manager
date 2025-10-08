@@ -2,7 +2,7 @@
 <!DOCTYPE PLUGIN [
 <!ENTITY name "smart.sleep.manager">
 <!ENTITY author "Smart Sleep Manager Team">
-<!ENTITY version "2025.10.08b">
+<!ENTITY version "2025.10.08c">
 <!ENTITY launch "Settings/SmartSleepSettings">
 <!ENTITY gitURL "https://raw.githubusercontent.com/skycryer/smart-sleep-manager/main">
 <!ENTITY pluginURL "&gitURL;/smart.sleep.manager.plg">
@@ -11,6 +11,14 @@
 <PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" min="6.12.0">
 
 <CHANGES>
+###2025.10.08c
+- Fixed Telegram test button functionality with improved error handling
+- Added configurable cron schedule setting
+- Improved array disk detection using Unraid disks.ini
+- Enhanced disk dropdown population with fallback methods
+- Added notification types icon for UI consistency
+- Removed personal config file from repository for security
+
 ###2025.10.08b
 - Simplified XML structure to resolve parse errors
 - Using single quotes for XML attributes
