@@ -71,6 +71,14 @@ if (empty($array_disks)) {
     $other_disks = $all_disks; // Show same disks in both lists
 }
 
+// For the dropdowns, we want ALL disks to be available in BOTH lists
+// This allows users to select any disk for monitoring or ignoring
+$all_available_disks = $all_disks;
+
+// Debug: Let's see what we have in config
+// error_log("DEBUG: array_disks config = " . ($cfg['array_disks'] ?? 'not set'));
+// error_log("DEBUG: ignore_disks config = " . ($cfg['ignore_disks'] ?? 'not set'));
+
 // Get network interfaces
 exec("ip link show | grep -E '^[0-9]+:' | awk -F': ' '{print \$2}' | grep -v lo", $network_interfaces);
 ?>
@@ -230,21 +238,21 @@ _(Sleep Method)_:
 
 _(Array Disks to Monitor)_:
 : <select id="array_disks_select" name="array_disks" multiple style="width: 200px; height: 100px;">
-  <?foreach ($array_disks as $disk):?>
-  <?=mk_option_check($cfg['array_disks'], $disk, "/dev/$disk")?>
+  <?foreach ($all_available_disks as $disk):?>
+  <?=mk_option_check($cfg['array_disks'], $disk, $disk)?>
   <?endforeach;?>
   </select>
 
-> Select which array disks must be in standby before sleep is allowed. Only actual array disks are shown here.
+> Select which disks must be in standby before sleep is allowed. All available disks are shown.
 
 _(Disks to Ignore)_:
 : <select id="ignore_disks_select" name="ignore_disks" multiple style="width: 200px; height: 100px;">
-  <?foreach ($other_disks as $disk):?>
-  <?=mk_option_check($cfg['ignore_disks'], $disk, "/dev/$disk (Cache/Docker/Parity)")?>
+  <?foreach ($all_available_disks as $disk):?>
+  <?=mk_option_check($cfg['ignore_disks'], $disk, $disk)?>
   <?endforeach;?>
   </select>
 
-> Select disks to ignore (Cache, Docker, Parity drives). These disks will not prevent sleep even if active.
+> Select disks to ignore (will not prevent sleep even if active). All available disks are shown.
 
 ## 🌐 Network Monitoring
 
