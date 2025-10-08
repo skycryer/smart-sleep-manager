@@ -11,6 +11,11 @@
 <PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" min="6.12.0">
 
 <CHANGES>
+###2025.10.09
+- Version bump to force Unraid update detection
+- All fixes from 2025.10.08.7 included: JavaScript script tag fix, dropdown functionality
+- Major version change to bypass caching issues
+
 ###2025.10.08.7
 - CRITICAL FIX: Added missing opening script tag causing JavaScript to display as text
 - Fixed JavaScript functions appearing in page head instead of being executed
