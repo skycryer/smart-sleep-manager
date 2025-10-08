@@ -1,245 +1,97 @@
-<?xml version='1.0' standalone='yes'?><?xml version='1.0' standalone='yes'?>
-
-<!DOCTYPE PLUGIN [<!DOCTYPE PLUGIN [
-
-<!ENTITY name "smart.sleep.manager"><!ENTITY name "smart.sleep.manager">
-
-<!ENTITY displayname "Smart Sleep Manager"><!ENTITY displayname "Smart Sleep Manager">
-
-<!ENTITY author "SkyCryer"><!ENTITY author "SkyCryer">
-
-<!ENTITY version "2025.10.09.11"><!ENTITY version "2025.10.09.10">
-
-<!ENTITY launch "Settings/SmartSleepSettings"><!ENTITY launch "Settings/SmartSleepSettings">
-
-<!ENTITY gitURL "https://github.com/skycryer/smart-sleep-manager/raw/main"><!ENTITY gitURL "https://github.com/skycryer/smart-sleep-manager/raw/main">
-
-<!ENTITY pluginURL "&gitURL;/smart.sleep.manager.plg"><!ENTITY cachebust "cb=20251008">
-
-]><!ENTITY pluginURL "&gitURL;/smart.sleep.manager.plg">
-
+<?xml version='1.0' standalone='yes'?>
+<!DOCTYPE PLUGIN [
+<!ENTITY name "smart.sleep.manager">
+<!ENTITY displayname "Smart Sleep Manager">
+<!ENTITY author "SkyCryer">
+<!ENTITY version "2025.10.09.12">
+<!ENTITY launch "Settings/SmartSleepSettings">
+<!ENTITY gitURL "https://github.com/skycryer/smart-sleep-manager/raw/main">
+<!ENTITY pluginURL "&gitURL;/smart.sleep.manager.plg">
 ]>
 
 <PLUGIN name="&name;" displayname="&displayname;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" min="6.12.0">
 
-<PLUGIN name="&name;" displayname="&displayname;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" min="6.12.0">
-
 Smart Sleep Manager
-
-Smart Sleep Manager
-
-Automated sleep management for your Unraid server with intelligent monitoring and Telegram notifications. Monitors disk activity and network traffic to determine when it's safe to put the server to sleep. Includes configurable idle timers, disk monitoring, and Wake-on-LAN support for seamless operation.
 
 Automated sleep management for your Unraid server with intelligent monitoring and Telegram notifications. Monitors disk activity and network traffic to determine when it's safe to put the server to sleep. Includes configurable idle timers, disk monitoring, and Wake-on-LAN support for seamless operation.
 
 <CHANGES>
+###2025.10.09.12
+- Final fix: Removed duplicate content from .plg file
+- Cleaned XML structure completely
+- Ready for stable installation
 
-###2025.10.09.11<CHANGES>
-
-- Emergency fix: Repaired corrupted .plg file###2025.10.09
-
-- Fixed test_basic.php download URL issue  - Version bump to force Unraid update detection
-
-- Cleaned XML structure from text contamination- All fixes from 2025.10.08.7 included: JavaScript script tag fix, dropdown functionality
-
-- Major version change to bypass caching issues
+###2025.10.09.11
+- Emergency fix: Repaired corrupted .plg file
+- Fixed test_basic.php download URL issue  
+- Cleaned XML structure from text contamination
 
 ###2025.10.09.10
-
-- Updated author to SkyCryer###2025.10.08.7
-
-- Enhanced Telegram test debugging- CRITICAL FIX: Added missing opening script tag causing JavaScript to display as text
-
-- Added comprehensive error logging- Fixed JavaScript functions appearing in page head instead of being executed
-
-- Improved plugin description and display name- Resolved validateForm, testTelegram, and runSleepCheck function visibility issues
-
-- JavaScript now properly enclosed in script tags
+- Updated author to SkyCryer
+- Enhanced Telegram test debugging
+- Added comprehensive error logging
+- Improved plugin description and display name
 
 ###2025.10.09
-
-- Major UI simplification: Single "Disks to Monitor" dropdown###2025.10.08.6
-
-- Removed confusing "Array Disks" + "Ignore Disks" split- Fixed dropdown pre-selection: Config values now properly pre-select in dropdowns
-
-- Enhanced dropdown selection logic with proper pre-selection- Fixed ignore disks dropdown: Now shows ALL available disks instead of just ignore_disks
-
-- Backward compatibility with existing configs- Added custom mk_disk_option function for proper space-separated value handling
-
-- Fixed JavaScript structure and validation- Enhanced disk selection functionality with correct state preservation
-
+- Major UI simplification: Single "Disks to Monitor" dropdown
+- Removed confusing "Array Disks" + "Ignore Disks" split
+- Enhanced dropdown selection logic with proper pre-selection
+- Backward compatibility with existing configs
+- Fixed JavaScript structure and validation
 - Improved Telegram test error handling
+</CHANGES>
 
-</CHANGES>###2025.10.08.5
-
-- Version format change to improve Unraid update detection
-
-<FILE Run="/bin/bash">- Same fixes as 2025.10.08e with better version numbering
-
+<FILE Run="/bin/bash">
 <INLINE>
-
-echo "Installing Smart Sleep Manager..."###2025.10.08e
-
-rm -rf /usr/local/emhttp/plugins/smart.sleep.manager- Fixed JavaScript syntax errors causing "Unexpected token '}'" 
-
-mkdir -p /usr/local/emhttp/plugins/smart.sleep.manager/include- Removed duplicate code in testTelegram function
-
-mkdir -p /usr/local/emhttp/plugins/smart.sleep.manager/scripts- Fixed dropdownchecklist initialization order to prevent "attempted to call method 'refresh'" error
-
-mkdir -p /usr/local/emhttp/plugins/smart.sleep.manager/icons- Consolidated JavaScript initialization into single function
-
-mkdir -p /usr/local/emhttp/plugins/smart.sleep.manager/images- Improved error handling for dropdown plugin failures
-
+echo "Installing Smart Sleep Manager..."
+rm -rf /usr/local/emhttp/plugins/smart.sleep.manager
+mkdir -p /usr/local/emhttp/plugins/smart.sleep.manager/include
+mkdir -p /usr/local/emhttp/plugins/smart.sleep.manager/scripts
+mkdir -p /usr/local/emhttp/plugins/smart.sleep.manager/icons
+mkdir -p /usr/local/emhttp/plugins/smart.sleep.manager/images
 mkdir -p /boot/config/plugins/smart.sleep.manager
-
-echo "Plugin directories created"###2025.10.08d
-
-</INLINE>- Fixed dropdown display issues for Array Disk Monitoring and Disk to Ignore
-
-</FILE>- Added fallback for missing dropdownchecklist plugin
-
-- Enhanced error handling for disk selection dropdowns
-
-<FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/default.cfg">- Improved multi-select functionality with proper styling
-
-<URL>&gitURL;/default.cfg</URL>
-
-</FILE>###2025.10.08c
-
-- Fixed Telegram test button functionality with improved error handling
-
-<FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/SmartSleepSettings.page">- Added configurable cron schedule setting
-
-<URL>&gitURL;/SmartSleepSettings.page</URL>- Improved array disk detection using Unraid disks.ini
-
-</FILE>- Enhanced disk dropdown population with fallback methods
-
-- Added notification types icon for UI consistency
-
-<FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/SleepManager.php">- Removed personal config file from repository for security
-
-<URL>&gitURL;/SleepManager.php</URL>
-
-</FILE>###2025.10.08b
-
-- Simplified XML structure to resolve parse errors
-
-<FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/include/update.sleep.php">- Using single quotes for XML attributes
-
-<URL>&gitURL;/include/update.sleep.php</URL>- Minimal CDATA sections
-
+echo "Plugin directories created"
+</INLINE>
 </FILE>
 
-###2025.10.08a
+<FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/default.cfg">
+<URL>&gitURL;/default.cfg</URL>
+</FILE>
 
-<FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/include/SleepMode.php">- Fixed XML ampersand escaping issue
+<FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/SmartSleepSettings.page">
+<URL>&gitURL;/SmartSleepSettings.page</URL>
+</FILE>
 
-<URL>&gitURL;/include/SleepMode.php</URL>- Resolved xml parse error during Unraid installation
+<FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/SleepManager.php">
+<URL>&gitURL;/SleepManager.php</URL>
+</FILE>
 
-</FILE></CHANGES>
+<FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/include/update.sleep.php">
+<URL>&gitURL;/include/update.sleep.php</URL>
+</FILE>
 
+<FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/include/SleepMode.php">
+<URL>&gitURL;/include/SleepMode.php</URL>
+</FILE>
 
+<FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/include/test_telegram.php">
+<URL>&gitURL;/include/test_telegram.php</URL>
+</FILE>
 
-<FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/include/test_telegram.php"><FILE Run="/bin/bash">
+<FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/include/test_basic.php">
+<URL>&gitURL;/include/test_basic.php</URL>
+</FILE>
 
-<URL>&gitURL;/include/test_telegram.php</URL><INLINE>
-
-</FILE>echo "Installing Smart Sleep Manager..."
-
-rm -rf /usr/local/emhttp/plugins/smart.sleep.manager
-
-<FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/include/test_basic.php">mkdir -p /usr/local/emhttp/plugins/smart.sleep.manager/include
-
-<URL>&gitURL;/include/test_basic.php</URL>mkdir -p /usr/local/emhttp/plugins/smart.sleep.manager/scripts
-
-</FILE>mkdir -p /usr/local/emhttp/plugins/smart.sleep.manager/icons
-
-mkdir -p /usr/local/emhttp/plugins/smart.sleep.manager/images
-
-<FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/scripts/smart_sleep.sh" Mode="0755">mkdir -p /boot/config/plugins/smart.sleep.manager
-
-<URL>&gitURL;/scripts/smart_sleep.sh</URL>echo "Plugin directories created"
-
-</FILE></INLINE>
-
+<FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/scripts/smart_sleep.sh" Mode="0755">
+<URL>&gitURL;/scripts/smart_sleep.sh</URL>
 </FILE>
 
 <FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/scripts/preRun" Mode="0755">
-
-<URL>&gitURL;/scripts/preRun</URL><FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/default.cfg">
-
-</FILE><URL>https://raw.githubusercontent.com/skycryer/smart-sleep-manager/main/default.cfg</URL>
-
+<URL>&gitURL;/scripts/preRun</URL>
 </FILE>
 
 <FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/scripts/postRun" Mode="0755">
-
-<URL>&gitURL;/scripts/postRun</URL><FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/SmartSleepSettings.page">
-
-</FILE><URL>https://raw.githubusercontent.com/skycryer/smart-sleep-manager/main/SmartSleepSettings.page</URL>
-
-</FILE>
-
-<FILE Run="/bin/bash">
-
-<INLINE><FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/SleepManager.php">
-
-echo "Configuring Smart Sleep Manager..."<URL>https://raw.githubusercontent.com/skycryer/smart-sleep-manager/main/SleepManager.php</URL>
-
-if [ ! -f /boot/config/plugins/smart.sleep.manager/smart.sleep.manager.cfg ]; then</FILE>
-
-  cp /usr/local/emhttp/plugins/smart.sleep.manager/default.cfg /boot/config/plugins/smart.sleep.manager/smart.sleep.manager.cfg
-
-  echo "Default configuration copied"<FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/include/update.sleep.php">
-
-fi<URL>https://raw.githubusercontent.com/skycryer/smart-sleep-manager/main/include/update.sleep.php</URL>
-
-chmod +x /usr/local/emhttp/plugins/smart.sleep.manager/scripts/smart_sleep.sh 2>/dev/null</FILE>
-
-chmod +x /usr/local/emhttp/plugins/smart.sleep.manager/scripts/preRun 2>/dev/null
-
-chmod +x /usr/local/emhttp/plugins/smart.sleep.manager/scripts/postRun 2>/dev/null<FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/include/SleepMode.php">
-
-echo "Permissions set"<URL>https://raw.githubusercontent.com/skycryer/smart-sleep-manager/main/include/SleepMode.php</URL>
-
-CRONLINE="*/5 * * * * /usr/local/emhttp/plugins/smart.sleep.manager/scripts/smart_sleep.sh >/dev/null"</FILE>
-
-if ! crontab -l 2>/dev/null | grep -q "smart_sleep.sh"; then
-
-  (crontab -l 2>/dev/null; echo "$CRONLINE") | crontab -<FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/include/test_telegram.php">
-
-  echo "Cron job installed"<URL>https://raw.githubusercontent.com/skycryer/smart-sleep-manager/main/include/test_telegram.php</URL>
-
-fi</FILE>
-
-echo "Smart Sleep Manager installed successfully!"
-
-</INLINE><FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/include/test_basic.php">
-
-</FILE><URL>https://raw.githubusercontent.com/skycryer/smart-sleep-manager/main/include/test_basic.php</URL>
-
-</FILE>
-
-<FILE Run="/bin/bash" Method="remove">
-
-<INLINE><FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/scripts/smart_sleep.sh" Mode="0755">
-
-echo "Removing Smart Sleep Manager..."<URL>https://raw.githubusercontent.com/skycryer/smart-sleep-manager/main/scripts/smart_sleep.sh</URL>
-
-crontab -l 2>/dev/null | grep -v "smart_sleep.sh" | crontab - 2>/dev/null</FILE>
-
-rm -rf /usr/local/emhttp/plugins/smart.sleep.manager
-
-echo "Smart Sleep Manager removed successfully!"<FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/scripts/preRun" Mode="0755">
-
-</INLINE><URL>https://raw.githubusercontent.com/skycryer/smart-sleep-manager/main/scripts/preRun</URL>
-
-</FILE></FILE>
-
-
-
-</PLUGIN><FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/scripts/postRun" Mode="0755">
-<URL>https://raw.githubusercontent.com/skycryer/smart-sleep-manager/main/scripts/postRun</URL>
+<URL>&gitURL;/scripts/postRun</URL>
 </FILE>
 
 <FILE Run="/bin/bash">
