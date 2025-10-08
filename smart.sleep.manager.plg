@@ -10,6 +10,10 @@
 
 <PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" min="6.12.0">
 
+Smart Sleep Manager
+
+Automated sleep management for your Unraid server with intelligent monitoring and Telegram notifications. Monitors disk activity and network traffic to determine when it's safe to put the server to sleep. Includes configurable idle timers, disk monitoring, and Wake-on-LAN support for seamless operation.
+
 <CHANGES>
 ###2025.10.09
 - Version bump to force Unraid update detection
