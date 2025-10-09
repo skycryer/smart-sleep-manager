@@ -300,6 +300,26 @@ _(Enable MQTT)_:
   </select>
 
 > Enable MQTT publishing of sleep status and system sensors. Perfect for Home Assistant integration.
+> 
+> **⚠️ MQTT Requirements:** MQTT functionality requires `mosquitto_pub` command. This plugin supports both:
+> 
+> **✅ Option 1: Use existing Mosquitto Docker container (Recommended)**
+> - If you already installed Mosquitto via Apps tab, you're ready to go!
+> - Plugin will automatically detect and use your Docker container
+> - No additional installation needed
+> 
+> **✅ Option 2: Install mosquitto-clients on host system**
+> ```bash
+> # Method 1: Using slackpkg (recommended)
+> slackpkg install mosquitto
+> 
+> # Method 2: Manual download and install
+> cd /tmp
+> wget https://slackware.uk/slackware/slackware64-15.0/slackware64/n/mosquitto-2.0.18-x86_64-1.txz
+> installpkg mosquitto-2.0.18-x86_64-1.txz
+> rm mosquitto-2.0.18-x86_64-1.txz
+> ```
+> After installation, the "Run Sleep Check Now" button will send MQTT messages to your broker.
 
 _(MQTT Host)_:
 : <input type="text" name="mqtt_host" value="<?=$cfg['mqtt_host']?>" placeholder="192.168.1.100" style="width: 200px;">
