@@ -3,13 +3,6 @@
  * Processes form submissions and updates configuration
  */
 
-// Enable error reporting for debugging
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
-// Debug: Log all POST data
-error_log("Smart Sleep Manager: POST data received: " . print_r($_POST, true));
-
 $plugin = 'smart.sleep.manager';
 $docroot = $docroot ?? $_SERVER['DOCUMENT_ROOT'] ?: '/usr/local/emhttp';
 require_once "$docroot/webGui/include/Wrappers.php";
@@ -155,13 +148,6 @@ $config_content = [
 // Write configuration file
 file_put_contents($config_file, implode("\n", $config_content) . "\n");
 
-// Debug: Log what we saved (remove this after testing)
-error_log("Smart Sleep Manager Config Save Debug:");
-error_log("MQTT Enabled: $mqtt_enabled");
-error_log("MQTT Host: $mqtt_host");
-error_log("MQTT Port: $mqtt_port");
-error_log("Config file contents: " . file_get_contents($config_file));
-
 // Update cron job based on enabled status and custom schedule
 $cron_job = "$cron_schedule /usr/local/emhttp/plugins/$plugin/scripts/smart_sleep.sh >/dev/null 2>&1";
 
@@ -197,16 +183,11 @@ $log_message = date('Y-m-d H:i:s') . " - Smart Sleep Manager configuration updat
 file_put_contents('/tmp/smart-sleep.log', $log_message, FILE_APPEND | LOCK_EX);
 
 echo "Configuration saved successfully!";
-echo "<br>MQTT Enabled: $mqtt_enabled";
-echo "<br>MQTT Host: $mqtt_host";
-echo "<br>Config file: $config_file";
-echo "<br>File exists: " . (file_exists($config_file) ? "YES" : "NO");
-echo "<br>File writable: " . (is_writable(dirname($config_file)) ? "YES" : "NO");
 
 // Redirect back to settings page
 if (isset($_POST['#redirect'])) {
-    echo "<script>setTimeout(function() { window.location.href = '{$_POST['#redirect']}'; }, 2000);</script>";
+    echo "<script>setTimeout(function() { window.location.href = '{$_POST['#redirect']}'; }, 1500);</script>";
 } else {
-    echo "<script>setTimeout(function() { window.location.href = '/Settings/SmartSleepSettings'; }, 2000);</script>";
+    echo "<script>setTimeout(function() { window.location.href = '/Settings/SmartSleepSettings'; }, 1500);</script>";
 }
 ?>

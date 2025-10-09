@@ -3,7 +3,7 @@
 <!ENTITY name "smart.sleep.manager">
 <!ENTITY displayname "Smart Sleep Manager">
 <!ENTITY author "SkyCryer">
-<!ENTITY version "2025.10.09.28">
+<!ENTITY version "2025.10.09.29">
 <!ENTITY launch "Settings/SmartSleepSettings">
 <!ENTITY gitURL "https://github.com/skycryer/smart-sleep-manager/raw/main">
 <!ENTITY pluginURL "&gitURL;/smart.sleep.manager.plg">
@@ -37,6 +37,13 @@ MQTT Sensors:
 -->
 
 <CHANGES>
+###2025.10.09.29
+- PRODUCTION READY: MQTT configuration now fully functional  
+- Removed debug output for clean user experience
+- Faster redirect (1.5s) after successful configuration save
+- Configuration persistence confirmed working
+- MQTT sensors ready for Home Assistant integration
+
 ###2025.10.09.28
 - Fixed form submission - direct POST to update.sleep.php
 - Bypassed Unraid's update.php system that wasn't executing our handler
