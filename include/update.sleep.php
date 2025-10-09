@@ -3,6 +3,13 @@
  * Processes form submissions and updates configuration
  */
 
+// Enable error reporting for debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+// Debug: Log all POST data
+error_log("Smart Sleep Manager: POST data received: " . print_r($_POST, true));
+
 $plugin = 'smart.sleep.manager';
 $docroot = $docroot ?? $_SERVER['DOCUMENT_ROOT'] ?: '/usr/local/emhttp';
 require_once "$docroot/webGui/include/Wrappers.php";
@@ -121,6 +128,7 @@ $config_content = [
     "sleep_method=\"$sleep_method\"",
     "monitor_disks=\"$monitor_disks_list\"",
     "array_disks=\"$array_disks_list\"", // Keep for backward compatibility
+    "ignore_disks=\"\"", // Keep for backward compatibility
     "network_monitoring=\"$network_monitoring\"",
     "network_interface=\"$network_interface\"",
     "network_threshold=\"$network_threshold\"",
@@ -189,4 +197,9 @@ $log_message = date('Y-m-d H:i:s') . " - Smart Sleep Manager configuration updat
 file_put_contents('/tmp/smart-sleep.log', $log_message, FILE_APPEND | LOCK_EX);
 
 echo "Configuration saved successfully!";
+echo "<br>MQTT Enabled: $mqtt_enabled";
+echo "<br>MQTT Host: $mqtt_host";
+echo "<br>Config file: $config_file";
+echo "<br>File exists: " . (file_exists($config_file) ? "YES" : "NO");
+echo "<br>File writable: " . (is_writable(dirname($config_file)) ? "YES" : "NO");
 ?>
