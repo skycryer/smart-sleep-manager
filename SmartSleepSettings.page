@@ -250,6 +250,44 @@ function testTelegramMinimal(form) {
              '&chat_id=' + encodeURIComponent(form.telegram_chat_id.value));
 }
 
+function testTelegramCurl(form) {
+    if (!form.telegram_bot_token.value || !form.telegram_chat_id.value) {
+        alert('Please enter both Bot Token and Chat ID to test Telegram cURL');
+        return;
+    }
+    
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', '/plugins/smart.sleep.manager/include/test_telegram_curl.php', true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4) {
+            console.log('Telegram cURL Status:', xhr.status);
+            console.log('Telegram cURL Response:', xhr.responseText);
+            console.log('Telegram cURL Response Length:', xhr.responseText.length);
+            if (xhr.status === 200) {
+                if (xhr.responseText.length > 0) {
+                    try {
+                        var response = JSON.parse(xhr.responseText);
+                        if (response.success) {
+                            alert('✅ Telegram cURL Test successful!\n' + response.message);
+                        } else {
+                            alert('❌ Telegram cURL Test failed: ' + response.message);
+                        }
+                    } catch (e) {
+                        alert('❌ Telegram cURL Test failed: Invalid JSON\n\nResponse: "' + xhr.responseText + '"');
+                    }
+                } else {
+                    alert('❌ Telegram cURL Test failed: Empty response!');
+                }
+            } else {
+                alert('❌ Telegram cURL Test failed: HTTP ' + xhr.status);
+            }
+        }
+    };
+    xhr.send('bot_token=' + encodeURIComponent(form.telegram_bot_token.value) + 
+             '&chat_id=' + encodeURIComponent(form.telegram_chat_id.value));
+}
+
 function testTelegram(form) {
     if (!form.telegram_bot_token.value || !form.telegram_chat_id.value) {
         alert('Please enter both Bot Token and Chat ID to test Telegram');
@@ -487,6 +525,11 @@ _(Test Telegram Minimal)_:
 : <input type="button" value="Test Telegram Minimal" onclick="testTelegramMinimal(this.form)">
 
 > Minimal test to check if Telegram script can receive POST data.
+
+_(Test Telegram cURL)_:
+: <input type="button" value="Test Telegram cURL" onclick="testTelegramCurl(this.form)">
+
+> Test Telegram using cURL (like sleepy.sh script) instead of file_get_contents.
 
 _(Test Telegram)_:
 : <input type="button" value="Test Telegram" onclick="testTelegram(this.form)">
