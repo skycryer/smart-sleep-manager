@@ -3,7 +3,7 @@
 <!ENTITY name "smart.sleep.manager">
 <!ENTITY displayname "Smart Sleep Manager">
 <!ENTITY author "SkyCryer">
-<!ENTITY version "2025.10.09.37">
+<!ENTITY version "2025.10.09.38">
 <!ENTITY launch "Settings/SmartSleepSettings">
 <!ENTITY gitURL "https://github.com/skycryer/smart-sleep-manager/raw/main">
 <!ENTITY pluginURL "&gitURL;/smart.sleep.manager.plg">
@@ -164,6 +164,8 @@ if ! command -v mosquitto_pub &gt;/dev/null 2&gt;&amp;1; then
                 echo "  1. Go to Apps tab"
                 echo "  2. Search for 'mosquitto'"
                 echo "  3. Install 'Eclipse Mosquitto'"
+                echo "  4. Set RUN_INSECURE_MQTT_SERVER=1 in container settings"
+                echo "  5. If using Docker: Install mosquitto-clients on host system"
                 echo ""
                 echo "Alternative: Install manually with: slackpkg install mosquitto"
                 echo "Or visit: https://packages.slackware.com/ to find current package"
@@ -177,6 +179,8 @@ if ! command -v mosquitto_pub &gt;/dev/null 2&gt;&amp;1; then
         echo "  1. Go to Apps tab"
         echo "  2. Search for 'mosquitto'"
         echo "  3. Install 'Eclipse Mosquitto'"
+        echo "  4. Set RUN_INSECURE_MQTT_SERVER=1 in container settings"
+        echo "  5. If using Docker: Install mosquitto-clients on host system"
         echo ""
         echo "Alternative: Install via command line with:"
         echo "  slackpkg install mosquitto"
