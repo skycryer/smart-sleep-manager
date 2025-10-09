@@ -3,7 +3,7 @@
 <!ENTITY name "smart.sleep.manager">
 <!ENTITY displayname "Smart Sleep Manager">
 <!ENTITY author "SkyCryer">
-<!ENTITY version      "2025.10.09.53">
+<!ENTITY version      "2025.10.09.54">
 <!ENTITY launch "Settings/SmartSleepSettings">
 <!ENTITY gitURL "https://github.com/skycryer/smart-sleep-manager/raw/main">
 <!ENTITY pluginURL "&gitURL;/smart.sleep.manager.plg">
@@ -36,6 +36,12 @@ MQTT Sensors:
 -->
 
 <CHANGES>
+###2025.10.09.54
+- Fixed awake time tracking initialization
+- Added reboot detection (resets awake time on reboot)
+- Awake time now correctly starts at 0 after boot
+- Note: Awake Time = Uptime is normal until first sleep cycle
+
 ###2025.10.09.53
 - Added new "Awake Time" sensor - tracks time excluding sleep periods
 - "Uptime" sensor shows total time since boot (including sleep)

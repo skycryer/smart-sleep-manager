@@ -247,17 +247,28 @@ get_awake_time() {
 
         # Calculate time since last wake + accumulated time
         if [ -n "$accumulated_awake" ] && [ -n "$last_wake_uptime" ]; then
-            local current_session=$((current_uptime - last_wake_uptime))
-            awake_time=$((accumulated_awake + current_session))
+            # Check if system was rebooted (uptime < last_wake_uptime means reboot)
+            if [ "$current_uptime" -lt "$last_wake_uptime" ]; then
+                # System was rebooted - reset tracking
+                log_message "System reboot detected (uptime=$current_uptime < last_wake=$last_wake_uptime) - resetting awake time tracker"
+                awake_time=$current_uptime
+                echo "accumulated=0" > "$AWAKE_TIME_FILE"
+                echo "last_wake_uptime=0" >> "$AWAKE_TIME_FILE"
+            else
+                local current_session=$((current_uptime - last_wake_uptime))
+                awake_time=$((accumulated_awake + current_session))
+            fi
         else
             # First run after boot - initialize
             awake_time=$current_uptime
+            echo "accumulated=0" > "$AWAKE_TIME_FILE"
+            echo "last_wake_uptime=0" >> "$AWAKE_TIME_FILE"
         fi
     else
-        # First run ever - awake time = uptime
+        # First run ever - start tracking from 0
         awake_time=$current_uptime
         echo "accumulated=0" > "$AWAKE_TIME_FILE"
-        echo "last_wake_uptime=$current_uptime" >> "$AWAKE_TIME_FILE"
+        echo "last_wake_uptime=0" >> "$AWAKE_TIME_FILE"
     fi
 
     echo "$awake_time"
