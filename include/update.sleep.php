@@ -48,12 +48,18 @@ $enabled = $_POST['enabled'] ?? 'false';
 $idle_time_minutes = (int)($_POST['idle_time_minutes'] ?? 15);
 $sleep_method = $_POST['sleep_method'] ?? 'dynamix_s3';
 
-// Handle monitor_disks from dropdownchecklist plugin (comes as space-separated string) or array
-$monitor_disks = $_POST['monitor_disks'] ?? '';
+// Handle monitor_disks from dropdownchecklist plugin or standard multi-select
+$monitor_disks = $_POST['monitor_disks'] ?? $_POST['monitor_disks_hidden'] ?? '';
+
+// Debug logging
+error_log("Smart Sleep Manager Debug: monitor_disks POST data: " . print_r($_POST['monitor_disks'] ?? 'NOT SET', true));
+error_log("Smart Sleep Manager Debug: monitor_disks_hidden POST data: " . print_r($_POST['monitor_disks_hidden'] ?? 'NOT SET', true));
+
 if (is_array($monitor_disks)) {
-    $monitor_disks_list = implode(' ', $monitor_disks);
+    // Standard multi-select or hidden array inputs
+    $monitor_disks_list = implode(' ', array_filter($monitor_disks));
 } else {
-    // dropdownchecklist sends space-separated string
+    // dropdownchecklist sends space-separated string or single value
     $monitor_disks_list = trim($monitor_disks);
 }
 
@@ -61,6 +67,8 @@ if (is_array($monitor_disks)) {
 if (empty($monitor_disks_list)) {
     $monitor_disks_list = $_POST['monitor_disks_list'] ?? $_POST['array_disks_list'] ?? '';
 }
+
+error_log("Smart Sleep Manager Debug: Final monitor_disks_list: '$monitor_disks_list'");
 
 $array_disks_list = $monitor_disks_list; // For backward compatibility in config
 
