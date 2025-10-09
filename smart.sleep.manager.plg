@@ -3,7 +3,7 @@
 <!ENTITY name "smart.sleep.manager">
 <!ENTITY displayname "Smart Sleep Manager">
 <!ENTITY author "SkyCryer">
-<!ENTITY version "2025.10.09.18">
+<!ENTITY version "2025.10.09.19">
 <!ENTITY launch "Settings/SmartSleepSettings">
 <!ENTITY gitURL "https://github.com/skycryer/smart-sleep-manager/raw/main">
 <!ENTITY pluginURL "&gitURL;/smart.sleep.manager.plg">
@@ -11,11 +11,32 @@
 
 <PLUGIN name="&name;" displayname="&displayname;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" min="6.12.0">
 
+<!--
+PLUGIN DESCRIPTION
 Smart Sleep Manager
 
 Automated sleep management for your Unraid server with intelligent monitoring and Telegram notifications. Monitors disk activity and network traffic to determine when it's safe to put the server to sleep. Includes configurable idle timers, disk monitoring, and Wake-on-LAN support for seamless operation.
 
+Features:
+• Intelligent disk activity monitoring
+• Network traffic monitoring
+• Telegram notifications for sleep events
+• Wake-on-LAN support with automatic configuration
+• Configurable idle timers and thresholds
+• Compatible with Dynamix S3 sleep
+• Web-based configuration interface
+-->
+
 <CHANGES>
+###2025.10.09.19  
+- Fixed disk selection not showing all pre-selected disks
+- Enhanced default.cfg with monitor_disks field for proper initialization
+- Improved backwards compatibility logic for config migration
+- Auto-select array disks on first-time setup for better user experience
+- Added comprehensive debug logging for disk selection troubleshooting
+- Created test_simple.php for ultra-basic PHP response validation
+- Added "Test Simple" button to isolate telegram JSON response issues
+
 ###2025.10.09.18
 - Restored dropdownchecklist plugin functionality with checkbox interface
 - Fixed disk selection dropdown with proper pre-selection and count display  
