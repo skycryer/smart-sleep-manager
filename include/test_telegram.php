@@ -3,80 +3,118 @@
  * Tests Telegram bot configuration
  */
 
-// Clean output buffer and set headers
+// Start output buffering and prevent any unintended output
 ob_start();
-header('Content-Type: application/json');
-header('Cache-Control: no-cache, must-revalidate');
 
-function sendJsonResponse($data) {
-    ob_clean();
-    echo json_encode($data);
-    ob_end_flush();
+// Set proper headers
+header('Content-Type: application/json; charset=utf-8');
+header('Cache-Control: no-cache, must-revalidate');
+header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+
+// Function to send clean JSON response
+function sendResponse($success, $message) {
+    // Clear any previous output
+    if (ob_get_length()) ob_clean();
+    
+    $response = array(
+        'success' => $success,
+        'message' => $message,
+        'timestamp' => date('Y-m-d H:i:s')
+    );
+    
+    echo json_encode($response);
+    
+    // Flush and end output buffering
+    if (ob_get_length()) ob_end_flush();
     exit;
 }
 
-// Check request method and data
+// Check if this is a POST request
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    sendJsonResponse(['success' => false, 'error' => 'POST method required']);
+    sendResponse(false, 'POST method required');
 }
 
-$bot_token = $_POST['bot_token'] ?? '';
-$chat_id = $_POST['chat_id'] ?? '';
+// Get POST data
+$bot_token = isset($_POST['bot_token']) ? trim($_POST['bot_token']) : '';
+$chat_id = isset($_POST['chat_id']) ? trim($_POST['chat_id']) : '';
 
+// Validate inputs
 if (empty($bot_token) || empty($chat_id)) {
-    sendJsonResponse(['success' => false, 'error' => 'Bot token and chat ID are required']);
+    sendResponse(false, 'Bot token and chat ID are required');
 }
 
-// Sanitize inputs
-$bot_token_clean = preg_replace('/[^0-9A-Za-z:_-]/', '', $bot_token);
-$chat_id_clean = preg_replace('/[^0-9-]/', '', $chat_id);
+// Basic format validation
+if (!preg_match('/^\d+:[A-Za-z0-9_-]+$/', $bot_token)) {
+    sendResponse(false, 'Invalid bot token format');
+}
 
-if (empty($bot_token_clean) || empty($chat_id_clean)) {
-    sendJsonResponse(['success' => false, 'error' => 'Invalid bot token or chat ID format']);
+if (!preg_match('/^-?\d+$/', $chat_id)) {
+    sendResponse(false, 'Invalid chat ID format');
 }
 
 try {
     // Prepare test message
-    $hostname = trim(exec('hostname 2>/dev/null')) ?: 'Unknown';
+    $hostname = 'Unknown';
+    if (function_exists('gethostname')) {
+        $hostname = gethostname();
+    } elseif (isset($_SERVER['SERVER_NAME'])) {
+        $hostname = $_SERVER['SERVER_NAME'];
+    }
+    
     $timestamp = date('Y-m-d H:i:s');
-    $message = "🔧 *Smart Sleep Manager Test*\n🖥️ Server: $hostname\n⏰ Time: $timestamp\n✅ Telegram configuration is working correctly!";
+    $message = "🔧 *Smart Sleep Manager Test*\n🖥️ Server: " . $hostname . "\n⏰ Time: " . $timestamp . "\n✅ Telegram configuration is working correctly!";
 
-    // Send test message
-    $url = "https://api.telegram.org/bot$bot_token_clean/sendMessage";
-    $data = [
-        'chat_id' => $chat_id_clean,
+    // Prepare Telegram API request
+    $url = "https://api.telegram.org/bot" . $bot_token . "/sendMessage";
+    
+    $post_data = http_build_query(array(
+        'chat_id' => $chat_id,
         'text' => $message,
         'parse_mode' => 'Markdown'
-    ];
+    ));
 
-    $context = stream_context_create([
-        'http' => [
+    // Create context for the request
+    $context = stream_context_create(array(
+        'http' => array(
             'method' => 'POST',
-            'header' => 'Content-Type: application/x-www-form-urlencoded',
-            'content' => http_build_query($data),
-            'timeout' => 15
-        ]
-    ]);
+            'header' => "Content-Type: application/x-www-form-urlencoded\r\n" .
+                       "Content-Length: " . strlen($post_data) . "\r\n",
+            'content' => $post_data,
+            'timeout' => 30
+        )
+    ));
 
-    $result = @file_get_contents($url, false, $context);
+    // Make the request
+    $result = file_get_contents($url, false, $context);
 
     if ($result === false) {
-        sendJsonResponse(['success' => false, 'error' => 'Network error: Could not connect to Telegram API']);
+        sendResponse(false, 'Failed to connect to Telegram API');
     }
 
-    $response = json_decode($result, true);
+    // Parse the response
+    $telegram_response = json_decode($result, true);
 
-    if ($response && isset($response['ok']) && $response['ok']) {
-        sendJsonResponse(['success' => true, 'message' => 'Test message sent successfully']);
+    if ($telegram_response === null) {
+        sendResponse(false, 'Invalid response from Telegram API');
+    }
+
+    if (isset($telegram_response['ok']) && $telegram_response['ok'] === true) {
+        sendResponse(true, 'Test message sent successfully to Telegram!');
     } else {
-        $error = isset($response['description']) ? $response['description'] : 'Unknown API error';
-        if (isset($response['error_code'])) {
-            $error = "API Error {$response['error_code']}: $error";
+        $error_msg = 'Unknown error';
+        if (isset($telegram_response['description'])) {
+            $error_msg = $telegram_response['description'];
         }
-        sendJsonResponse(['success' => false, 'error' => $error]);
+        if (isset($telegram_response['error_code'])) {
+            $error_msg = 'Error ' . $telegram_response['error_code'] . ': ' . $error_msg;
+        }
+        sendResponse(false, $error_msg);
     }
 
 } catch (Exception $e) {
-    sendJsonResponse(['success' => false, 'error' => 'PHP Error: ' . $e->getMessage()]);
+    sendResponse(false, 'Exception: ' . $e->getMessage());
 }
+
+// This should never be reached, but just in case
+sendResponse(false, 'Unknown error occurred');
 ?>
