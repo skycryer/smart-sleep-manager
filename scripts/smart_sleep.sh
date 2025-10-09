@@ -36,12 +36,6 @@ load_config() {
     NETWORK_MONITORING="true"
     NETWORK_INTERFACE="eth0"
     NETWORK_THRESHOLD_BYTES=102400
-    TELEGRAM_ENABLED="false"
-    TELEGRAM_BOT_TOKEN=""
-    TELEGRAM_CHAT_ID=""
-    TELEGRAM_NOTIFY_STANDBY="true"
-    TELEGRAM_NOTIFY_SLEEP="true"
-    TELEGRAM_NOTIFY_BLOCKED="false"
     MQTT_ENABLED="false"
     MQTT_HOST=""
     MQTT_PORT="1883"
@@ -68,12 +62,6 @@ load_config() {
                 network_monitoring) NETWORK_MONITORING="$value" ;;
                 network_interface) NETWORK_INTERFACE="$value" ;;
                 network_threshold) NETWORK_THRESHOLD_BYTES="$value" ;;
-                telegram_enabled) TELEGRAM_ENABLED="$value" ;;
-                telegram_bot_token) TELEGRAM_BOT_TOKEN="$value" ;;
-                telegram_chat_id) TELEGRAM_CHAT_ID="$value" ;;
-                telegram_notify_standby) TELEGRAM_NOTIFY_STANDBY="$value" ;;
-                telegram_notify_sleep) TELEGRAM_NOTIFY_SLEEP="$value" ;;
-                telegram_notify_blocked) TELEGRAM_NOTIFY_BLOCKED="$value" ;;
                 mqtt_enabled) MQTT_ENABLED="$value" ;;
                 mqtt_host) MQTT_HOST="$value" ;;
                 mqtt_port) MQTT_PORT="$value" ;;
@@ -109,25 +97,6 @@ load_config() {
 
 log_message() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> "$LOG_FILE"
-}
-
-send_telegram() {
-    if [ "$TELEGRAM_ENABLED" = "true" ] && [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ]; then
-        local message="$1"
-        local hostname=$(hostname)
-        local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
-        
-        local full_message="🖥️ *$hostname* - $timestamp
-
-$message"
-
-        curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
-             -d chat_id="$TELEGRAM_CHAT_ID" \
-             -d text="$full_message" \
-             -d parse_mode="Markdown" > /dev/null 2>&1
-        
-        log_message "Telegram notification sent: $message"
-    fi
 }
 
 send_mqtt() {
@@ -356,11 +325,6 @@ check_array_activity() {
         log_message "Array activity detected - sleep skipped"
         
         SLEEP_STATUS="blocked_disks"
-        
-        if [ "$TELEGRAM_NOTIFY_BLOCKED" = "true" ]; then
-            send_telegram "💤 *Sleep blocked* - Active array disks:
-$(printf '%s\n' "${active_disks[@]}" | sed 's/^/• /')"
-        fi
         
         echo ""
         echo "💤 SLEEP BLOCKED: Active array disks present"

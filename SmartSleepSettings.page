@@ -135,10 +135,16 @@ function validateForm(form) {
 function runSleepCheck() {
     if (confirm('Run sleep check now? This will execute the sleep logic once manually.')) {
         var xhr = new XMLHttpRequest();
-        xhr.open('GET', '/plugins/<?=$plugin?>/scripts/smart_sleep.sh', true);
+        xhr.open('GET', '/plugins/<?=$plugin?>/include/run_sleep_check.php', true);
         xhr.onreadystatechange = function() {
             if (xhr.readyState === 4) {
-                alert('Sleep check executed. Check the log file for details.');
+                if (xhr.status === 200) {
+                    // Show the output in a popup or console
+                    console.log('Sleep check output:', xhr.responseText);
+                    alert('Sleep check executed. Output logged to browser console. Check /tmp/smart-sleep.log for details.');
+                } else {
+                    alert('Error executing sleep check. Status: ' + xhr.status);
+                }
             }
         };
         xhr.send();
@@ -280,6 +286,8 @@ _(Network Threshold)_ (Bytes/second):
 : <input type="number" name="network_threshold" min="0" value="<?=$cfg['network_threshold']?:102400?>" class="narrow">
 
 > Network traffic threshold in bytes per second. Traffic above this level will prevent sleep. Default: 102400 (100 KB/s).
+
+## 📊 MQTT Monitoring
 
 ## 📱 Telegram Notifications
 

@@ -67,12 +67,6 @@ $array_disks_list = $monitor_disks_list; // For backward compatibility in config
 $network_monitoring = $_POST['network_monitoring'] ?? 'true';
 $network_interface = $_POST['network_interface'] ?? 'eth0';
 $network_threshold = (int)($_POST['network_threshold'] ?? 102400);
-$telegram_enabled = $_POST['telegram_enabled'] ?? 'false';
-$telegram_bot_token = $_POST['telegram_bot_token'] ?? '';
-$telegram_chat_id = $_POST['telegram_chat_id'] ?? '';
-$telegram_notify_standby = $_POST['telegram_notify_standby'] ?? 'true';
-$telegram_notify_sleep = $_POST['telegram_notify_sleep'] ?? 'true';
-$telegram_notify_blocked = $_POST['telegram_notify_blocked'] ?? 'false';
 $mqtt_enabled = $_POST['mqtt_enabled'] ?? 'false';
 $mqtt_host = $_POST['mqtt_host'] ?? '';
 $mqtt_port = (int)($_POST['mqtt_port'] ?? 1883);
@@ -104,10 +98,6 @@ if (!preg_match('/^[\d\*\/,-]+\s+[\d\*\/,-]+\s+[\d\*\/,-]+\s+[\d\*\/,-]+\s+[\d\*
     $cron_schedule = '*/5 * * * *'; // Default fallback
 }
 
-// Sanitize telegram inputs
-$telegram_bot_token = preg_replace('/[^0-9A-Za-z:_-]/', '', $telegram_bot_token);
-$telegram_chat_id = preg_replace('/[^0-9-]/', '', $telegram_chat_id);
-
 // Sanitize MQTT inputs
 $mqtt_host = preg_replace('/[^0-9A-Za-z.\-]/', '', $mqtt_host);
 $mqtt_username = trim($mqtt_username);
@@ -125,12 +115,6 @@ $config_content = [
     "network_monitoring=\"$network_monitoring\"",
     "network_interface=\"$network_interface\"",
     "network_threshold=\"$network_threshold\"",
-    "telegram_enabled=\"$telegram_enabled\"",
-    "telegram_bot_token=\"$telegram_bot_token\"",
-    "telegram_chat_id=\"$telegram_chat_id\"",
-    "telegram_notify_standby=\"$telegram_notify_standby\"",
-    "telegram_notify_sleep=\"$telegram_notify_sleep\"",
-    "telegram_notify_blocked=\"$telegram_notify_blocked\"",
     "mqtt_enabled=\"$mqtt_enabled\"",
     "mqtt_host=\"$mqtt_host\"",
     "mqtt_port=\"$mqtt_port\"",

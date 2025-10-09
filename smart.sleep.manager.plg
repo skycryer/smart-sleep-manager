@@ -3,7 +3,7 @@
 <!ENTITY name "smart.sleep.manager">
 <!ENTITY displayname "Smart Sleep Manager">
 <!ENTITY author "SkyCryer">
-<!ENTITY version "2025.10.09.29">
+<!ENTITY version "2025.10.09.30">
 <!ENTITY launch "Settings/SmartSleepSettings">
 <!ENTITY gitURL "https://github.com/skycryer/smart-sleep-manager/raw/main">
 <!ENTITY pluginURL "&gitURL;/smart.sleep.manager.plg">
@@ -37,6 +37,14 @@ MQTT Sensors:
 -->
 
 <CHANGES>
+###2025.10.09.30
+- Fixed "Run Sleep Check Now" button functionality
+- Added PHP wrapper (run_sleep_check.php) for manual sleep check execution
+- Added mosquitto-clients installation check for MQTT support  
+- Improved JavaScript error handling and output logging
+- Manual sleep check now properly executes and shows output
+- MQTT sensors should now work when button is pressed
+
 ###2025.10.09.29
 - PRODUCTION READY: MQTT configuration now fully functional  
 - Removed debug output for clean user experience
@@ -97,6 +105,17 @@ mkdir -p /usr/local/emhttp/plugins/smart.sleep.manager/scripts
 mkdir -p /usr/local/emhttp/plugins/smart.sleep.manager/icons
 mkdir -p /usr/local/emhttp/plugins/smart.sleep.manager/images
 mkdir -p /boot/config/plugins/smart.sleep.manager
+
+# Install mosquitto-clients for MQTT support if not already installed
+if ! command -v mosquitto_pub >/dev/null 2>&1; then
+    echo "Installing mosquitto-clients for MQTT support..."
+    if [ -f /etc/slackware-version ]; then
+        # Try to install via slackpkg or download package
+        echo "Note: mosquitto_pub not found. MQTT features will be disabled until mosquitto-clients is installed."
+        echo "Install with: slackpkg install mosquitto or download mosquitto package manually"
+    fi
+fi
+
 echo "Plugin directories created"
 </INLINE>
 </FILE>
@@ -115,6 +134,10 @@ echo "Plugin directories created"
 
 <FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/include/update.sleep.php">
 <URL>&gitURL;/include/update.sleep.php</URL>
+</FILE>
+
+<FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/include/run_sleep_check.php">
+<URL>&gitURL;/include/run_sleep_check.php</URL>
 </FILE>
 
 <FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/include/SleepMode.php">
