@@ -137,26 +137,38 @@ publish_mqtt_discovery() {
     if [ "$MQTT_ENABLED" = "true" ] && [ -n "$MQTT_HOST" ]; then
         local hostname=$(hostname)
         local base_topic="homeassistant/sensor/${hostname}_smart_sleep"
+        local state_topic="${MQTT_TOPIC_PREFIX}/state"
         
-        # Status sensor
-        local status_config="{\"name\":\"${hostname} Sleep Status\",\"state_topic\":\"${MQTT_TOPIC_PREFIX}/status\",\"unique_id\":\"${hostname}_sleep_status\",\"device\":{\"identifiers\":[\"${hostname}_smart_sleep\"],\"name\":\"${hostname} Smart Sleep\",\"manufacturer\":\"SkyCryer\",\"model\":\"Smart Sleep Manager\"}}"
+        # Device configuration (shared by all sensors)
+        local device_config="{\"identifiers\":[\"${hostname}_smart_sleep\"],\"name\":\"${hostname} Smart Sleep\",\"manufacturer\":\"SkyCryer\",\"model\":\"Smart Sleep Manager\",\"sw_version\":\"2025.10.09\"}"
+        
+        # Sleep Status sensor - extracts 'status' from JSON
+        local status_config="{\"name\":\"${hostname} Sleep Status\",\"state_topic\":\"${state_topic}\",\"value_template\":\"{{ value_json.status }}\",\"unique_id\":\"${hostname}_sleep_status\",\"icon\":\"mdi:sleep\",\"device\":${device_config}}"
         send_mqtt "$(echo "$base_topic/status/config" | tr '[:upper:]' '[:lower:]')" "$status_config"
         
-        # Uptime sensor  
-        local uptime_config="{\"name\":\"${hostname} Uptime\",\"state_topic\":\"${MQTT_TOPIC_PREFIX}/uptime\",\"unique_id\":\"${hostname}_uptime\",\"unit_of_measurement\":\"s\",\"device_class\":\"duration\",\"device\":{\"identifiers\":[\"${hostname}_smart_sleep\"],\"name\":\"${hostname} Smart Sleep\",\"manufacturer\":\"SkyCryer\",\"model\":\"Smart Sleep Manager\"}}"
+        # Uptime sensor - extracts 'uptime' from JSON
+        local uptime_config="{\"name\":\"${hostname} Uptime\",\"state_topic\":\"${state_topic}\",\"value_template\":\"{{ value_json.uptime }}\",\"unique_id\":\"${hostname}_uptime\",\"unit_of_measurement\":\"s\",\"device_class\":\"duration\",\"icon\":\"mdi:clock-outline\",\"device\":${device_config}}"
         send_mqtt "$(echo "$base_topic/uptime/config" | tr '[:upper:]' '[:lower:]')" "$uptime_config"
         
-        # Network rate sensor
-        local network_config="{\"name\":\"${hostname} Network Rate\",\"state_topic\":\"${MQTT_TOPIC_PREFIX}/network_rate\",\"unique_id\":\"${hostname}_network_rate\",\"unit_of_measurement\":\"B/s\",\"device_class\":\"data_rate\",\"device\":{\"identifiers\":[\"${hostname}_smart_sleep\"],\"name\":\"${hostname} Smart Sleep\",\"manufacturer\":\"SkyCryer\",\"model\":\"Smart Sleep Manager\"}}"
+        # Network Rate sensor - extracts 'network_rate' from JSON
+        local network_config="{\"name\":\"${hostname} Network Rate\",\"state_topic\":\"${state_topic}\",\"value_template\":\"{{ value_json.network_rate }}\",\"unique_id\":\"${hostname}_network_rate\",\"unit_of_measurement\":\"B/s\",\"device_class\":\"data_rate\",\"icon\":\"mdi:network\",\"device\":${device_config}}"
         send_mqtt "$(echo "$base_topic/network_rate/config" | tr '[:upper:]' '[:lower:]')" "$network_config"
         
-        # Active disks sensor
-        local disks_config="{\"name\":\"${hostname} Active Disks\",\"state_topic\":\"${MQTT_TOPIC_PREFIX}/active_disks\",\"unique_id\":\"${hostname}_active_disks\",\"unit_of_measurement\":\"disks\",\"device\":{\"identifiers\":[\"${hostname}_smart_sleep\"],\"name\":\"${hostname} Smart Sleep\",\"manufacturer\":\"SkyCryer\",\"model\":\"Smart Sleep Manager\"}}"
+        # Active Disks sensor - extracts 'active_disks' from JSON
+        local disks_config="{\"name\":\"${hostname} Active Disks\",\"state_topic\":\"${state_topic}\",\"value_template\":\"{{ value_json.active_disks }}\",\"unique_id\":\"${hostname}_active_disks\",\"unit_of_measurement\":\"disks\",\"icon\":\"mdi:harddisk\",\"device\":${device_config}}"
         send_mqtt "$(echo "$base_topic/active_disks/config" | tr '[:upper:]' '[:lower:]')" "$disks_config"
         
-        # Sleep timer sensor
-        local timer_config="{\"name\":\"${hostname} Sleep Timer\",\"state_topic\":\"${MQTT_TOPIC_PREFIX}/sleep_timer\",\"unique_id\":\"${hostname}_sleep_timer\",\"unit_of_measurement\":\"min\",\"device_class\":\"duration\",\"device\":{\"identifiers\":[\"${hostname}_smart_sleep\"],\"name\":\"${hostname} Smart Sleep\",\"manufacturer\":\"SkyCryer\",\"model\":\"Smart Sleep Manager\"}}"
+        # Sleep Timer sensor - extracts 'sleep_timer' from JSON
+        local timer_config="{\"name\":\"${hostname} Sleep Timer\",\"state_topic\":\"${state_topic}\",\"value_template\":\"{{ value_json.sleep_timer }}\",\"unique_id\":\"${hostname}_sleep_timer\",\"unit_of_measurement\":\"min\",\"device_class\":\"duration\",\"icon\":\"mdi:timer\",\"device\":${device_config}}"
         send_mqtt "$(echo "$base_topic/sleep_timer/config" | tr '[:upper:]' '[:lower:]')" "$timer_config"
+        
+        # Hostname sensor - extracts 'hostname' from JSON
+        local hostname_config="{\"name\":\"${hostname} Hostname\",\"state_topic\":\"${state_topic}\",\"value_template\":\"{{ value_json.hostname }}\",\"unique_id\":\"${hostname}_hostname\",\"icon\":\"mdi:server\",\"device\":${device_config}}"
+        send_mqtt "$(echo "$base_topic/hostname/config" | tr '[:upper:]' '[:lower:]')" "$hostname_config"
+        
+        # Last Check sensor - extracts 'last_check' from JSON
+        local lastcheck_config="{\"name\":\"${hostname} Last Check\",\"state_topic\":\"${state_topic}\",\"value_template\":\"{{ value_json.last_check }}\",\"unique_id\":\"${hostname}_last_check\",\"device_class\":\"timestamp\",\"icon\":\"mdi:clock-check\",\"device\":${device_config}}"
+        send_mqtt "$(echo "$base_topic/last_check/config" | tr '[:upper:]' '[:lower:]')" "$lastcheck_config"
         
         log_message "MQTT Discovery: Published sensor configurations for Home Assistant"
     fi
