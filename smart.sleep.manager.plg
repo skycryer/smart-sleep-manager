@@ -3,7 +3,7 @@
 <!ENTITY name "smart.sleep.manager">
 <!ENTITY displayname "Smart Sleep Manager">
 <!ENTITY author "SkyCryer">
-<!ENTITY version "2025.10.09.17">
+<!ENTITY version "2025.10.09.18">
 <!ENTITY launch "Settings/SmartSleepSettings">
 <!ENTITY gitURL "https://github.com/skycryer/smart-sleep-manager/raw/main">
 <!ENTITY pluginURL "&gitURL;/smart.sleep.manager.plg">
@@ -16,6 +16,14 @@ Smart Sleep Manager
 Automated sleep management for your Unraid server with intelligent monitoring and Telegram notifications. Monitors disk activity and network traffic to determine when it's safe to put the server to sleep. Includes configurable idle timers, disk monitoring, and Wake-on-LAN support for seamless operation.
 
 <CHANGES>
+###2025.10.09.18
+- Restored dropdownchecklist plugin functionality with checkbox interface
+- Fixed disk selection dropdown with proper pre-selection and count display  
+- Enhanced fallback support for systems without dropdownchecklist plugin
+- Completely rewrote test_telegram.php with clean output buffer management
+- Fixed JSON response formatting and POST data handling
+- Added comprehensive input validation and better error messages
+
 ###2025.10.09.17
 - Fixed disk monitoring dropdown: Changed to monitor_disks[] for proper multi-select
 - Fixed Telegram test empty response: Cleaned output buffer management
