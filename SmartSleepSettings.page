@@ -14,6 +14,15 @@ $scripts = "$docroot/plugins/$plugin/scripts";
 $config = "/boot/config/plugins/$plugin/$plugin.cfg";
 $cfg = parse_plugin_cfg($plugin);
 
+// Ensure MQTT configuration fields exist with defaults
+$cfg['mqtt_enabled'] = $cfg['mqtt_enabled'] ?? 'false';
+$cfg['mqtt_host'] = $cfg['mqtt_host'] ?? '';
+$cfg['mqtt_port'] = $cfg['mqtt_port'] ?? '1883';
+$cfg['mqtt_username'] = $cfg['mqtt_username'] ?? '';
+$cfg['mqtt_password'] = $cfg['mqtt_password'] ?? '';
+$cfg['mqtt_topic_prefix'] = $cfg['mqtt_topic_prefix'] ?? 'unraid/smart-sleep';
+$cfg['mqtt_retain'] = $cfg['mqtt_retain'] ?? 'true';
+
 // Get available disks
 exec("lsblk -d -n -o NAME,TYPE | grep disk | awk '{print \$1}'", $all_disks);
 

@@ -10,6 +10,39 @@ require_once "$docroot/webGui/include/Wrappers.php";
 // Configuration file path
 $config_file = "/boot/config/plugins/$plugin/$plugin.cfg";
 
+// Ensure config directory exists
+$config_dir = dirname($config_file);
+if (!is_dir($config_dir)) {
+    mkdir($config_dir, 0755, true);
+}
+
+// Auto-migration: Add missing MQTT fields to existing config
+if (file_exists($config_file)) {
+    $existing_config = file_get_contents($config_file);
+    $needs_migration = false;
+    
+    // Check if MQTT fields are missing
+    if (strpos($existing_config, 'mqtt_enabled=') === false) {
+        $needs_migration = true;
+        
+        // Add MQTT defaults to existing config
+        $mqtt_defaults = [
+            'mqtt_enabled="false"',
+            'mqtt_host=""',
+            'mqtt_port="1883"',
+            'mqtt_username=""',
+            'mqtt_password=""',
+            'mqtt_topic_prefix="unraid/smart-sleep"',
+            'mqtt_retain="true"'
+        ];
+        
+        $existing_config = rtrim($existing_config) . "\n" . implode("\n", $mqtt_defaults) . "\n";
+        file_put_contents($config_file, $existing_config);
+        
+        error_log("Smart Sleep Manager: Auto-migrated config to add MQTT fields");
+    }
+}
+
 // Get form data
 $enabled = $_POST['enabled'] ?? 'false';
 $idle_time_minutes = (int)($_POST['idle_time_minutes'] ?? 15);
@@ -111,14 +144,15 @@ $config_content = [
     "cron_schedule=\"$cron_schedule\""
 ];
 
-// Ensure config directory exists
-$config_dir = dirname($config_file);
-if (!is_dir($config_dir)) {
-    mkdir($config_dir, 0755, true);
-}
-
 // Write configuration file
 file_put_contents($config_file, implode("\n", $config_content) . "\n");
+
+// Debug: Log what we saved (remove this after testing)
+error_log("Smart Sleep Manager Config Save Debug:");
+error_log("MQTT Enabled: $mqtt_enabled");
+error_log("MQTT Host: $mqtt_host");
+error_log("MQTT Port: $mqtt_port");
+error_log("Config file contents: " . file_get_contents($config_file));
 
 // Update cron job based on enabled status and custom schedule
 $cron_job = "$cron_schedule /usr/local/emhttp/plugins/$plugin/scripts/smart_sleep.sh >/dev/null 2>&1";
