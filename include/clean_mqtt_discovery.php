@@ -63,10 +63,16 @@ if (isset($config['mqtt_enabled']) && $config['mqtt_enabled'] === 'true' && !emp
     
     $base_topic = "homeassistant/sensor/" . strtolower($hostname) . "_smart_sleep";
     
-    // List of old sensors to remove
+    // List of all sensor topics to clean (remove them before recreating)
     $old_sensors = [
-        "$base_topic/test_sensor/config",
-        "$base_topic/status/config" // This might be the old test sensor
+        "$base_topic/test_sensor/config",  // Old test sensor if it exists
+        "$base_topic/status/config",
+        "$base_topic/uptime/config",
+        "$base_topic/network_rate/config",
+        "$base_topic/active_disks/config",
+        "$base_topic/sleep_timer/config",
+        "$base_topic/hostname/config",
+        "$base_topic/last_check/config"
     ];
     
     // Check if mosquitto_pub is available (Docker or host)

@@ -3,7 +3,7 @@
 <!ENTITY name "smart.sleep.manager">
 <!ENTITY displayname "Smart Sleep Manager">
 <!ENTITY author "SkyCryer">
-<!ENTITY version      "2025.10.09.50">
+<!ENTITY version      "2025.10.09.51">
 <!ENTITY launch "Settings/SmartSleepSettings">
 <!ENTITY gitURL "https://github.com/skycryer/smart-sleep-manager/raw/main">
 <!ENTITY pluginURL "&gitURL;/smart.sleep.manager.plg">
@@ -36,6 +36,12 @@ MQTT Sensors:
 -->
 
 <CHANGES>
+###2025.10.09.51
+- CRITICAL FIX: Removed code that deleted status sensor immediately after creating it
+- Fixed "Clear Sensors" button - now properly removes all 7 sensors before recreation
+- MQTT Discovery now creates all sensors correctly without deleting them again
+- Home Assistant auto-discovery should work properly now
+
 ###2025.10.09.50
 - CRITICAL FIX: Removed duplicate/broken MQTT code in smart_sleep.sh
 - Fixed MQTT Discovery for Home Assistant - discovery messages now work correctly

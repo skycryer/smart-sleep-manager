@@ -222,13 +222,8 @@ publish_mqtt_discovery() {
         local lastcheck_topic="$(echo "$base_topic/last_check/config" | tr '[:upper:]' '[:lower:]')"
         send_mqtt_discovery "$lastcheck_topic" "$lastcheck_config"
         log_message "MQTT Discovery: Sent Last Check sensor to $lastcheck_topic"
-        
-        # Remove old Test Sensor if it exists
-        local old_test_topic="$(echo "$base_topic/status/config" | tr '[:upper:]' '[:lower:]')"
-        send_mqtt_discovery "$old_test_topic" ""
-        log_message "MQTT Discovery: Sent empty config to remove old test sensor"
-        
-        echo "✅ MQTT Discovery: 7 sensors created + old test sensor removed"
+
+        echo "✅ MQTT Discovery: 7 sensors created successfully"
         
         log_message "MQTT Discovery: Published sensor configurations for Home Assistant"
     fi
