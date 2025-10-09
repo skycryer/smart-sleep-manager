@@ -3,7 +3,7 @@
 <!ENTITY name "smart.sleep.manager">
 <!ENTITY displayname "Smart Sleep Manager">
 <!ENTITY author "SkyCryer">
-<!ENTITY version "2025.10.09.20">
+<!ENTITY version "2025.10.09.21">
 <!ENTITY launch "Settings/SmartSleepSettings">
 <!ENTITY gitURL "https://github.com/skycryer/smart-sleep-manager/raw/main">
 <!ENTITY pluginURL "&gitURL;/smart.sleep.manager.plg">
@@ -28,6 +28,13 @@ Features:
 -->
 
 <CHANGES>
+###2025.10.09.21
+- Added minimal telegram test for debugging empty response issue
+- Created test_telegram_minimal.php to isolate POST data handling
+- Added "Test Telegram Minimal" button for step-by-step debugging
+- Enhanced debugging capabilities to identify telegram test failures
+- All basic tests (System Debug, PHP Test, Simple Test) confirmed working
+
 ###2025.10.09.20
 - Fixed plugin display name showing as 'Smart Sleep Manager' instead of internal ID
 - Improved plugin description formatting for better visibility in plugin manager
