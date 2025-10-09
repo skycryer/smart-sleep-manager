@@ -3,7 +3,7 @@
 <!ENTITY name "smart.sleep.manager">
 <!ENTITY displayname "Smart Sleep Manager">
 <!ENTITY author "SkyCryer">
-<!ENTITY version "2025.10.09.30">
+<!ENTITY version "2025.10.09.31">
 <!ENTITY launch "Settings/SmartSleepSettings">
 <!ENTITY gitURL "https://github.com/skycryer/smart-sleep-manager/raw/main">
 <!ENTITY pluginURL "&gitURL;/smart.sleep.manager.plg">
@@ -37,6 +37,13 @@ MQTT Sensors:
 -->
 
 <CHANGES>
+###2025.10.09.31
+- Added automatic mosquitto-clients installation during plugin setup
+- Tries slackpkg first, then manual download as fallback
+- MQTT support now works "out of the box" without manual setup
+- Graceful fallback if installation fails with clear instructions
+- Plugin installation may take slightly longer but MQTT will work immediately
+
 ###2025.10.09.30
 - Fixed "Run Sleep Check Now" button functionality
 - Added PHP wrapper (run_sleep_check.php) for manual sleep check execution
@@ -109,10 +116,31 @@ mkdir -p /boot/config/plugins/smart.sleep.manager
 # Install mosquitto-clients for MQTT support if not already installed
 if ! command -v mosquitto_pub >/dev/null 2>&1; then
     echo "Installing mosquitto-clients for MQTT support..."
-    if [ -f /etc/slackware-version ]; then
-        # Try to install via slackpkg or download package
-        echo "Note: mosquitto_pub not found. MQTT features will be disabled until mosquitto-clients is installed."
-        echo "Install with: slackpkg install mosquitto or download mosquitto package manually"
+    
+    # Try automatic installation
+    if command -v slackpkg >/dev/null 2>&1; then
+        echo "Attempting to install mosquitto via slackpkg..."
+        slackpkg -batch=on -default_answer=y install mosquitto 2>/dev/null || {
+            echo "slackpkg install failed, trying manual download..."
+            cd /tmp
+            wget -q https://slackware.uk/slackware/slackware64-15.0/slackware64/n/mosquitto-2.0.15-x86_64-1.txz 2>/dev/null && {
+                installpkg mosquitto-2.0.15-x86_64-1.txz 2>/dev/null
+                rm -f mosquitto-2.0.15-x86_64-1.txz
+            } || {
+                echo "WARNING: Could not install mosquitto-clients automatically."
+                echo "MQTT features will be disabled until mosquitto-clients is manually installed."
+                echo "Install manually with: slackpkg install mosquitto"
+            }
+        }
+    else
+        echo "WARNING: mosquitto_pub not found and slackpkg not available."
+        echo "MQTT features will be disabled until mosquitto-clients is installed."
+        echo "Install manually with package manager or download mosquitto package"
+    fi
+    
+    # Check if installation was successful
+    if command -v mosquitto_pub >/dev/null 2>&1; then
+        echo "SUCCESS: mosquitto-clients installed successfully!"
     fi
 fi
 
