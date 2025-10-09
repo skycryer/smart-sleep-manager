@@ -170,6 +170,25 @@ function forceMqttDiscovery() {
     }
 }
 
+function cleanMqttDiscovery() {
+    if (confirm('Clean and recreate all MQTT sensors? This will remove old sensors and create new ones. This may take a moment.')) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '/plugins/<?=$plugin?>/include/clean_mqtt_discovery.php', true);
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                    // Show the output in a popup or console
+                    console.log('MQTT Clean Discovery output:', xhr.responseText);
+                    alert('MQTT sensors cleaned and recreated. Check Home Assistant → Settings → Devices & Services → MQTT. You may need to restart Home Assistant. Output logged to browser console.');
+                } else {
+                    alert('Error cleaning MQTT Discovery. Status: ' + xhr.status);
+                }
+            }
+        };
+        xhr.send();
+    }
+}
+
 $(function() {
     // Check if dropdownchecklist plugin is available
     if ($.fn.dropdownchecklist) {
@@ -425,6 +444,11 @@ _(Force MQTT Discovery)_:
 : <input type="button" value="Force MQTT Discovery" onclick="forceMqttDiscovery()">
 
 > Force MQTT Discovery messages to Home Assistant immediately (bypasses hourly limit). Use this after changing MQTT settings or if sensors don't appear.
+
+_(Clean & Recreate MQTT Sensors)_:
+: <input type="button" value="Clean & Recreate Sensors" onclick="cleanMqttDiscovery()">
+
+> Remove old sensors and recreate all MQTT sensors. Use this if you see duplicate or old sensors in Home Assistant.
 
 _(Log File Location)_:
 : `/tmp/smart-sleep.log`
