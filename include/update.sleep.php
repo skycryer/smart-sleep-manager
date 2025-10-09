@@ -202,4 +202,11 @@ echo "<br>MQTT Host: $mqtt_host";
 echo "<br>Config file: $config_file";
 echo "<br>File exists: " . (file_exists($config_file) ? "YES" : "NO");
 echo "<br>File writable: " . (is_writable(dirname($config_file)) ? "YES" : "NO");
+
+// Redirect back to settings page
+if (isset($_POST['#redirect'])) {
+    echo "<script>setTimeout(function() { window.location.href = '{$_POST['#redirect']}'; }, 2000);</script>";
+} else {
+    echo "<script>setTimeout(function() { window.location.href = '/Settings/SmartSleepSettings'; }, 2000);</script>";
+}
 ?>

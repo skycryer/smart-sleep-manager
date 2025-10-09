@@ -218,9 +218,8 @@ $(function() {
 });
 </script>
 
-<form markdown="1" name="smart_sleep_settings" method="POST" action="/update.php" target="progressFrame" onsubmit="return validateForm(this);">
-<input type="hidden" name="#file" value="smart.sleep.manager/include/update.sleep.php">
-<input type="hidden" name="#include" value="file">
+<form markdown="1" name="smart_sleep_settings" method="POST" action="/plugins/smart.sleep.manager/include/update.sleep.php" onsubmit="return validateForm(this);">
+<input type="hidden" name="#redirect" value="/Settings/SmartSleepSettings">
 
 # Smart Sleep Manager Configuration
 
