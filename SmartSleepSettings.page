@@ -10,35 +10,7 @@ Icon="smartsleep.png"
 ?>
 <?
 $plugin = 'smart.sleep.manager';
-$scripts = "$docroot/p## 📊 MQTT Monitoring
-
-_(Enable MQTT)_:
-: <select name="mqtt_enabled">
-  <?=mk_option($cfg['mqtt_enabled'], "true", "Enabled")?>
-  <?=mk_option($cfg['mqtt_enabled'], "false", "Disabled")?>
-  </select>
-
-> Enable MQTT publishing of sleep status and system sensors. Perfect for Home Assistant integration.
-
-> **⚠️ MQTT Requirements:** MQTT functionality requires `mosquitto_pub` command. This plugin supports both:
-> 
-> **✅ Option 1: Use existing Mosquitto Docker container (Recommended)**
-> - If you already installed Mosquitto via Apps tab, you're ready to go!
-> - Plugin will automatically detect and use your Docker container
-> - No additional installation needed
-> 
-> **✅ Option 2: Install mosquitto-clients on host system**
-> ```bash
-> # Method 1: Using slackpkg (recommended)
-> slackpkg install mosquitto
-> 
-> # Method 2: Manual download and install
-> cd /tmp
-> wget https://slackware.uk/slackware/slackware64-15.0/slackware64/n/mosquitto-2.0.18-x86_64-1.txz
-> installpkg mosquitto-2.0.18-x86_64-1.txz
-> rm mosquitto-2.0.18-x86_64-1.txz
-> ```
-> After installation, the "Run Sleep Check Now" button will send MQTT messages to your broker.n/scripts";
+$scripts = "$docroot/plugins/$plugin/scripts";
 $config = "/boot/config/plugins/$plugin/$plugin.cfg";
 $cfg = parse_plugin_cfg($plugin);
 
@@ -179,24 +151,6 @@ function runSleepCheck() {
     }
 }
 
-function checkMQTTRequirements() {
-    // Check if mosquitto_pub is available when MQTT is enabled
-    var mqttEnabled = document.querySelector('select[name="mqtt_enabled"]').value;
-    if (mqttEnabled === 'true') {
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', '/plugins/<?=$plugin?>/include/check_mosquitto.php', true);
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState === 4 && xhr.status === 200) {
-                var response = xhr.responseText.trim();
-                if (response === 'missing') {
-                    alert('⚠️ Warning: mosquitto-clients package not found!\n\nMQTT messages will not be sent until you install it:\n\n1. Run: slackpkg install mosquitto\n2. Or download and install manually\n\nSee the MQTT section for detailed instructions.');
-                }
-            }
-        };
-        xhr.send();
-    }
-}
-
 $(function() {
     // Check if dropdownchecklist plugin is available
     if ($.fn.dropdownchecklist) {
@@ -267,11 +221,6 @@ $(function() {
             updateSelectDisplay();
         }
     }
-    
-    // Add event listener for MQTT enabled dropdown
-    $('select[name="mqtt_enabled"]').change(function() {
-        checkMQTTRequirements();
-    });
 });
 </script>
 
