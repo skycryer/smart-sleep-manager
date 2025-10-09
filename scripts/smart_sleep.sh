@@ -188,7 +188,7 @@ publish_mqtt_discovery() {
         log_message "MQTT Discovery: Sent Status sensor to $status_topic"
         
         # Uptime sensor - extracts 'uptime' from JSON
-        local uptime_config="{\"name\":\"${hostname} Uptime\",\"state_topic\":\"${state_topic}\",\"value_template\":\"{{ value_json.uptime }}\",\"unique_id\":\"${hostname}_uptime\",\"unit_of_measurement\":\"s\",\"device_class\":\"duration\",\"icon\":\"mdi:clock-outline\",\"device\":${device_config}}"
+        local uptime_config="{\"name\":\"${hostname} Uptime\",\"state_topic\":\"${state_topic}\",\"value_template\":\"{{ value_json.uptime }}\",\"unique_id\":\"${hostname}_uptime\",\"unit_of_measurement\":\"s\",\"device_class\":\"duration\",\"state_class\":\"total_increasing\",\"icon\":\"mdi:clock-outline\",\"device\":${device_config}}"
         local uptime_topic="$(echo "$base_topic/uptime/config" | tr '[:upper:]' '[:lower:]')"
         send_mqtt_discovery "$uptime_topic" "$uptime_config"
         log_message "MQTT Discovery: Sent Uptime sensor to $uptime_topic"
