@@ -132,6 +132,36 @@ send_mqtt() {
     fi
 }
 
+# MQTT Discovery for Home Assistant - creates sensors automatically
+publish_mqtt_discovery() {
+    if [ "$MQTT_ENABLED" = "true" ] && [ -n "$MQTT_HOST" ]; then
+        local hostname=$(hostname)
+        local base_topic="homeassistant/sensor/${hostname}_smart_sleep"
+        
+        # Status sensor
+        local status_config="{\"name\":\"${hostname} Sleep Status\",\"state_topic\":\"${MQTT_TOPIC_PREFIX}/status\",\"unique_id\":\"${hostname}_sleep_status\",\"device\":{\"identifiers\":[\"${hostname}_smart_sleep\"],\"name\":\"${hostname} Smart Sleep\",\"manufacturer\":\"SkyCryer\",\"model\":\"Smart Sleep Manager\"}}"
+        send_mqtt "$(echo "$base_topic/status/config" | tr '[:upper:]' '[:lower:]')" "$status_config"
+        
+        # Uptime sensor  
+        local uptime_config="{\"name\":\"${hostname} Uptime\",\"state_topic\":\"${MQTT_TOPIC_PREFIX}/uptime\",\"unique_id\":\"${hostname}_uptime\",\"unit_of_measurement\":\"s\",\"device_class\":\"duration\",\"device\":{\"identifiers\":[\"${hostname}_smart_sleep\"],\"name\":\"${hostname} Smart Sleep\",\"manufacturer\":\"SkyCryer\",\"model\":\"Smart Sleep Manager\"}}"
+        send_mqtt "$(echo "$base_topic/uptime/config" | tr '[:upper:]' '[:lower:]')" "$uptime_config"
+        
+        # Network rate sensor
+        local network_config="{\"name\":\"${hostname} Network Rate\",\"state_topic\":\"${MQTT_TOPIC_PREFIX}/network_rate\",\"unique_id\":\"${hostname}_network_rate\",\"unit_of_measurement\":\"B/s\",\"device_class\":\"data_rate\",\"device\":{\"identifiers\":[\"${hostname}_smart_sleep\"],\"name\":\"${hostname} Smart Sleep\",\"manufacturer\":\"SkyCryer\",\"model\":\"Smart Sleep Manager\"}}"
+        send_mqtt "$(echo "$base_topic/network_rate/config" | tr '[:upper:]' '[:lower:]')" "$network_config"
+        
+        # Active disks sensor
+        local disks_config="{\"name\":\"${hostname} Active Disks\",\"state_topic\":\"${MQTT_TOPIC_PREFIX}/active_disks\",\"unique_id\":\"${hostname}_active_disks\",\"unit_of_measurement\":\"disks\",\"device\":{\"identifiers\":[\"${hostname}_smart_sleep\"],\"name\":\"${hostname} Smart Sleep\",\"manufacturer\":\"SkyCryer\",\"model\":\"Smart Sleep Manager\"}}"
+        send_mqtt "$(echo "$base_topic/active_disks/config" | tr '[:upper:]' '[:lower:]')" "$disks_config"
+        
+        # Sleep timer sensor
+        local timer_config="{\"name\":\"${hostname} Sleep Timer\",\"state_topic\":\"${MQTT_TOPIC_PREFIX}/sleep_timer\",\"unique_id\":\"${hostname}_sleep_timer\",\"unit_of_measurement\":\"min\",\"device_class\":\"duration\",\"device\":{\"identifiers\":[\"${hostname}_smart_sleep\"],\"name\":\"${hostname} Smart Sleep\",\"manufacturer\":\"SkyCryer\",\"model\":\"Smart Sleep Manager\"}}"
+        send_mqtt "$(echo "$base_topic/sleep_timer/config" | tr '[:upper:]' '[:lower:]')" "$timer_config"
+        
+        log_message "MQTT Discovery: Published sensor configurations for Home Assistant"
+    fi
+}
+
 publish_mqtt_sensors() {
     if [ "$MQTT_ENABLED" = "true" ] && [ -n "$MQTT_HOST" ]; then
         local hostname=$(hostname)
@@ -423,6 +453,14 @@ main() {
     
     log_message "=== Smart Sleep Manager Check Started ==="
     echo "=== Smart Sleep Manager Check Started ==="
+    
+    # Publish MQTT Discovery (only once per hour to avoid spam)
+    local current_hour=$(date +%H)
+    local last_discovery_file="/tmp/smart_sleep_discovery_hour"
+    if [ ! -f "$last_discovery_file" ] || [ "$(cat "$last_discovery_file" 2>/dev/null)" != "$current_hour" ]; then
+        publish_mqtt_discovery
+        echo "$current_hour" > "$last_discovery_file"
+    fi
     
     # Force sleep if requested
     if [ "$FORCE_SLEEP" = true ]; then

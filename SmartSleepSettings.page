@@ -290,10 +290,6 @@ _(Network Threshold)_ (Bytes/second):
 ## 📊 MQTT Monitoring
 
 _(Enable MQTT)_:
-
-## � MQTT Monitoring
-
-_(Enable MQTT)_:
 : <select name="mqtt_enabled">
   <?=mk_option($cfg['mqtt_enabled'], "true", "Enabled")?>
   <?=mk_option($cfg['mqtt_enabled'], "false", "Disabled")?>
