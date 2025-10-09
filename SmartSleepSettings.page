@@ -289,47 +289,7 @@ _(Network Threshold)_ (Bytes/second):
 
 ## 📊 MQTT Monitoring
 
-## 📱 Telegram Notifications
-
-_(Enable Telegram)_:
-: <select name="telegram_enabled">
-  <?=mk_option($cfg['telegram_enabled'], "true", "Enabled")?>
-  <?=mk_option($cfg['telegram_enabled'], "false", "Disabled")?>
-  </select>
-
-> Enable Telegram bot notifications for sleep events.
-
-_(Bot Token)_:
-: <input type="text" name="telegram_bot_token" value="<?=$cfg['telegram_bot_token']?>" placeholder="123456789:ABCdefGHIjklMNOpqrsTUVwxyz" style="width: 300px;">
-
-> Telegram Bot Token from @BotFather. Format: 123456789:ABCdefGHIjklMNOpqrsTUVwxyz
-
-_(Chat ID)_:
-: <input type="text" name="telegram_chat_id" value="<?=$cfg['telegram_chat_id']?>" placeholder="Your Chat ID" class="narrow">
-
-> Your Telegram Chat ID. Send a message to your bot, then visit: https://api.telegram.org/botTOKEN/getUpdates
-
-### 🔔 Notification Types
-
-_(Notify on Standby Timer Start)_:
-: <select name="telegram_notify_standby">
-  <?=mk_option($cfg['telegram_notify_standby'], "true", "Enabled")?>
-  <?=mk_option($cfg['telegram_notify_standby'], "false", "Disabled")?>
-  </select>
-
-_(Notify on Sleep)_:
-: <select name="telegram_notify_sleep">
-  <?=mk_option($cfg['telegram_notify_sleep'], "true", "Enabled")?>
-  <?=mk_option($cfg['telegram_notify_sleep'], "false", "Disabled")?>
-  </select>
-
-_(Notify on Sleep Blocked)_:
-: <select name="telegram_notify_blocked">
-  <?=mk_option($cfg['telegram_notify_blocked'], "false", "Disabled")?>
-  <?=mk_option($cfg['telegram_notify_blocked'], "true", "Enabled")?>
-  </select>
-
-> Note: Telegram notifications will be logged to the log file. Actual sending requires the sleepy.sh script or manual implementation.
+_(Enable MQTT)_:
 
 ## � MQTT Monitoring
 

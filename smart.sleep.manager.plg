@@ -3,7 +3,7 @@
 <!ENTITY name "smart.sleep.manager">
 <!ENTITY displayname "Smart Sleep Manager">
 <!ENTITY author "SkyCryer">
-<!ENTITY version "2025.10.09.32">
+<!ENTITY version "2025.10.09.33">
 <!ENTITY launch "Settings/SmartSleepSettings">
 <!ENTITY gitURL "https://github.com/skycryer/smart-sleep-manager/raw/main">
 <!ENTITY pluginURL "&gitURL;/smart.sleep.manager.plg">
@@ -21,7 +21,6 @@ Features:
 - Intelligent disk activity monitoring
 - Network traffic monitoring  
 - MQTT sensor publishing for Home Assistant integration
-- Telegram notifications for sleep events
 - Wake-on-LAN support with automatic configuration
 - Configurable idle timers and thresholds
 - Compatible with Dynamix S3 sleep
@@ -37,6 +36,13 @@ MQTT Sensors:
 -->
 
 <CHANGES>
+###2025.10.09.33
+- Completely removed Telegram notifications from settings UI
+- Cleaned up duplicate MQTT section in settings page
+- Plugin now focuses purely on MQTT for notifications
+- Streamlined interface without unused Telegram options
+- All Telegram references removed from descriptions
+
 ###2025.10.09.32
 - CRITICAL FIX: Resolved XML parse errors that prevented installation
 - Fixed unescaped ampersand characters in shell commands (&amp; → &amp;amp;)
@@ -92,7 +98,6 @@ MQTT Sensors:
 - Configurable MQTT broker, username/password authentication
 - Home Assistant integration friendly with JSON sensor data
 - Additional sensors: uptime, network rate, active disks
-- Backward compatible with existing Telegram notifications
 
 ###2025.10.09.24
 - Production ready release with streamlined interface
@@ -104,7 +109,6 @@ MQTT Sensors:
 - Initial release with intelligent sleep management
 - Array disk activity monitoring with configurable standby detection
 - Network traffic monitoring with customizable thresholds  
-- Telegram notification support for sleep events
 - Wake-on-LAN configuration and post-wake Samba restart
 - Compatible with Dynamix S3 sleep
 - Web-based configuration interface with disk selection
