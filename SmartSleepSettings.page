@@ -40,7 +40,15 @@ _(Enable MQTT)_:
 
 > Enable MQTT publishing of sleep status and system sensors. Perfect for Home Assistant integration.
 
-> **⚠️ MQTT Requirements:** MQTT functionality requires the `mosquitto-clients` package. If MQTT messages are not being sent, install it manually in the **Unraid Terminal**:
+> **⚠️ MQTT Requirements:** MQTT functionality requires `mosquitto_pub` command. This plugin supports both:
+> 
+> **✅ Option 1: Use existing Mosquitto Docker container (Recommended)**
+> - If you already installed Mosquitto via Apps tab, you're ready to go!
+> - Plugin will automatically detect and use your Docker container
+> - No additional installation needed
+> 
+> **✅ Option 2: Install mosquitto-clients on host system**
+> Install `mosquitto-clients` package manually in the **Unraid Terminal**:
 > 
 > **Method 1 (Recommended):**
 > ```bash
@@ -227,7 +235,10 @@ function checkMQTTRequirements() {
             if (xhr.readyState === 4 && xhr.status === 200) {
                 var response = xhr.responseText.trim();
                 if (response === 'missing') {
-                    alert('⚠️ Warning: mosquitto-clients package not found!\n\nMQTT messages will not be sent until you install it.\n\n📋 EASY INSTALLATION:\n\n1. Go to APPS tab in Unraid WebUI\n2. Search for "mosquitto"\n3. Install "Eclipse Mosquitto"\n4. Set RUN_INSECURE_MQTT_SERVER=1 in container settings\n5. Restart plugin or click "Run Sleep Check Now"\n\n💡 If using Docker: You may need to install mosquitto-clients\nseparately on host system (see MQTT section below).');
+                    alert('⚠️ Warning: mosquitto_pub not found!\n\nMQTT messages will not be sent until you install it.\n\n📋 EASY INSTALLATION:\n\n1. Go to APPS tab in Unraid WebUI\n2. Search for "mosquitto"\n3. Install "Eclipse Mosquitto"\n4. Set RUN_INSECURE_MQTT_SERVER=1 in container settings\n5. Restart plugin or click "Run Sleep Check Now"\n\n💡 Alternative: Install mosquitto-clients on host system (see MQTT section below).');
+                } else if (response === 'available') {
+                    // Don't show alert if mosquitto is available
+                    console.log('MQTT mosquitto_pub is available');
                 }
             }
         };
