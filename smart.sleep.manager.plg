@@ -125,6 +125,10 @@ echo "Plugin directories created"
 <URL>&gitURL;/include/test_telegram.php</URL>
 </FILE>
 
+<FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/include/test_telegram_minimal.php">
+<URL>&gitURL;/include/test_telegram_minimal.php</URL>
+</FILE>
+
 <FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/include/test_basic.php">
 <URL>&gitURL;/include/test_basic.php</URL>
 </FILE>

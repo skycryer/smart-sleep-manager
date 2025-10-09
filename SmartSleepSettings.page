@@ -212,6 +212,44 @@ function testSimple() {
     xhr.send();
 }
 
+function testTelegramMinimal(form) {
+    if (!form.telegram_bot_token.value || !form.telegram_chat_id.value) {
+        alert('Please enter both Bot Token and Chat ID to test Telegram Minimal');
+        return;
+    }
+    
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', '/plugins/smart.sleep.manager/include/test_telegram_minimal.php', true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4) {
+            console.log('Telegram Minimal Status:', xhr.status);
+            console.log('Telegram Minimal Response:', xhr.responseText);
+            console.log('Telegram Minimal Response Length:', xhr.responseText.length);
+            if (xhr.status === 200) {
+                if (xhr.responseText.length > 0) {
+                    try {
+                        var response = JSON.parse(xhr.responseText);
+                        if (response.success) {
+                            alert('✅ Telegram Minimal Test successful!\nMessage: ' + response.message + '\nBot Token: ' + response.received_bot_token + '\nChat ID: ' + response.received_chat_id);
+                        } else {
+                            alert('❌ Telegram Minimal Test failed: ' + response.message);
+                        }
+                    } catch (e) {
+                        alert('❌ Telegram Minimal Test failed: Invalid JSON\n\nResponse: "' + xhr.responseText + '"');
+                    }
+                } else {
+                    alert('❌ Telegram Minimal Test failed: Empty response!');
+                }
+            } else {
+                alert('❌ Telegram Minimal Test failed: HTTP ' + xhr.status);
+            }
+        }
+    };
+    xhr.send('bot_token=' + encodeURIComponent(form.telegram_bot_token.value) + 
+             '&chat_id=' + encodeURIComponent(form.telegram_chat_id.value));
+}
+
 function testTelegram(form) {
     if (!form.telegram_bot_token.value || !form.telegram_chat_id.value) {
         alert('Please enter both Bot Token and Chat ID to test Telegram');
@@ -444,6 +482,11 @@ _(Test Simple)_:
 : <input type="button" value="Test Simple" onclick="testSimple()">
 
 > Ultra-simple test to check basic PHP response handling.
+
+_(Test Telegram Minimal)_:
+: <input type="button" value="Test Telegram Minimal" onclick="testTelegramMinimal(this.form)">
+
+> Minimal test to check if Telegram script can receive POST data.
 
 _(Test Telegram)_:
 : <input type="button" value="Test Telegram" onclick="testTelegram(this.form)">
