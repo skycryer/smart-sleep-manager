@@ -16,7 +16,18 @@ $idle_time_minutes = (int)($_POST['idle_time_minutes'] ?? 15);
 $sleep_method = $_POST['sleep_method'] ?? 'dynamix_s3';
 
 // Handle both new and old field names for backward compatibility
-$monitor_disks_list = $_POST['monitor_disks_list'] ?? $_POST['array_disks_list'] ?? '';
+$monitor_disks = $_POST['monitor_disks'] ?? [];
+if (is_array($monitor_disks)) {
+    $monitor_disks_list = implode(' ', $monitor_disks);
+} else {
+    $monitor_disks_list = $monitor_disks;
+}
+
+// Fallback to old field names
+if (empty($monitor_disks_list)) {
+    $monitor_disks_list = $_POST['monitor_disks_list'] ?? $_POST['array_disks_list'] ?? '';
+}
+
 $array_disks_list = $monitor_disks_list; // For backward compatibility in config
 
 $network_monitoring = $_POST['network_monitoring'] ?? 'true';

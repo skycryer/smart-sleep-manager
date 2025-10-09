@@ -226,25 +226,23 @@ function runSleepCheck() {
 }
 
 $(function() {
-    // Check if dropdownchecklist plugin is available
-    if ($.fn.dropdownchecklist) {
-        try {
-            // Initialize dropdown
-            $("#monitor_disks_select").dropdownchecklist({emptyText:'None', width:200, explicitClose:'...close'});
-            
-            // Refresh after a short delay
-            setTimeout(function() {
-                try {
-                    $("#monitor_disks_select").dropdownchecklist("refresh");
-                } catch(e) {
-                    console.log('Dropdown refresh failed:', e);
-                }
-            }, 500);
-        } catch(e) {
-            console.log('Dropdownchecklist plugin initialization failed:', e);
+    // Simple multi-select handling without external plugin
+    var select = document.getElementById('monitor_disks_select');
+    if (select) {
+        // Show selected count in dropdown
+        function updateSelectDisplay() {
+            var selected = Array.from(select.selectedOptions);
+            if (selected.length === 0) {
+                select.title = 'No disks selected';
+            } else if (selected.length === 1) {
+                select.title = '1 disk selected: ' + selected[0].text;
+            } else {
+                select.title = selected.length + ' disks selected: ' + selected.map(o => o.text).join(', ');
+            }
         }
-    } else {
-        console.log('Dropdownchecklist plugin not available, using standard selects');
+        
+        select.addEventListener('change', updateSelectDisplay);
+        updateSelectDisplay(); // Initial display
     }
 });
 </script>
@@ -285,7 +283,7 @@ _(Sleep Method)_:
 ## 💾 Disk Monitoring
 
 _(Disks to Monitor)_:
-: <select id="monitor_disks_select" name="monitor_disks" multiple style="width: 200px; height: 120px;">
+: <select id="monitor_disks_select" name="monitor_disks[]" multiple style="width: 200px; height: 120px;">
   <?foreach ($all_available_disks as $disk):?>
   <option value="<?=$disk?>"<?=in_array($disk, $selected_monitor_disks) ? ' selected' : ''?>><?=$disk?></option>
   <?endforeach;?>

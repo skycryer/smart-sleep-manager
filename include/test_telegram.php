@@ -3,44 +3,39 @@
  * Tests Telegram bot configuration
  */
 
-// Enable error reporting for debugging
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
-// Ensure clean output and proper headers
-if (ob_get_length()) ob_clean();
+// Clean output buffer and set headers
+ob_start();
 header('Content-Type: application/json');
 header('Cache-Control: no-cache, must-revalidate');
 
-// Log that we're starting
-error_log("Smart Sleep Manager: Telegram test started");
+function sendJsonResponse($data) {
+    ob_clean();
+    echo json_encode($data);
+    ob_end_flush();
+    exit;
+}
+
+// Check request method and data
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    sendJsonResponse(['success' => false, 'error' => 'POST method required']);
+}
+
+$bot_token = $_POST['bot_token'] ?? '';
+$chat_id = $_POST['chat_id'] ?? '';
+
+if (empty($bot_token) || empty($chat_id)) {
+    sendJsonResponse(['success' => false, 'error' => 'Bot token and chat ID are required']);
+}
+
+// Sanitize inputs
+$bot_token_clean = preg_replace('/[^0-9A-Za-z:_-]/', '', $bot_token);
+$chat_id_clean = preg_replace('/[^0-9-]/', '', $chat_id);
+
+if (empty($bot_token_clean) || empty($chat_id_clean)) {
+    sendJsonResponse(['success' => false, 'error' => 'Invalid bot token or chat ID format']);
+}
 
 try {
-    // Check if we even got here
-    if (!isset($_POST)) {
-        echo json_encode(['success' => false, 'error' => 'No POST data received']);
-        exit;
-    }
-
-    $bot_token = $_POST['bot_token'] ?? '';
-    $chat_id = $_POST['chat_id'] ?? '';
-
-    error_log("Smart Sleep Manager: Received bot_token=" . substr($bot_token, 0, 10) . "..., chat_id=$chat_id");
-
-    if (empty($bot_token) || empty($chat_id)) {
-        echo json_encode(['success' => false, 'error' => 'Bot token and chat ID are required']);
-        exit;
-    }
-
-    // Sanitize inputs
-    $bot_token_clean = preg_replace('/[^0-9A-Za-z:_-]/', '', $bot_token);
-    $chat_id_clean = preg_replace('/[^0-9-]/', '', $chat_id);
-
-    if (empty($bot_token_clean) || empty($chat_id_clean)) {
-        echo json_encode(['success' => false, 'error' => 'Invalid bot token or chat ID format']);
-        exit;
-    }
-
     // Prepare test message
     $hostname = trim(exec('hostname 2>/dev/null')) ?: 'Unknown';
     $timestamp = date('Y-m-d H:i:s');
@@ -54,8 +49,6 @@ try {
         'parse_mode' => 'Markdown'
     ];
 
-    error_log("Smart Sleep Manager: Sending to URL: $url");
-
     $context = stream_context_create([
         'http' => [
             'method' => 'POST',
@@ -68,36 +61,22 @@ try {
     $result = @file_get_contents($url, false, $context);
 
     if ($result === false) {
-        $error = error_get_last();
-        $error_msg = $error ? $error['message'] : 'Unknown network error';
-        error_log("Smart Sleep Manager: Network error: $error_msg");
-        echo json_encode(['success' => false, 'error' => "Network error: $error_msg"]);
-        exit;
+        sendJsonResponse(['success' => false, 'error' => 'Network error: Could not connect to Telegram API']);
     }
-
-    error_log("Smart Sleep Manager: Telegram API response: $result");
 
     $response = json_decode($result, true);
 
     if ($response && isset($response['ok']) && $response['ok']) {
-        echo json_encode(['success' => true, 'message' => 'Test message sent successfully']);
+        sendJsonResponse(['success' => true, 'message' => 'Test message sent successfully']);
     } else {
         $error = isset($response['description']) ? $response['description'] : 'Unknown API error';
         if (isset($response['error_code'])) {
             $error = "API Error {$response['error_code']}: $error";
         }
-        error_log("Smart Sleep Manager: Telegram API error: $error");
-        echo json_encode(['success' => false, 'error' => $error]);
+        sendJsonResponse(['success' => false, 'error' => $error]);
     }
 
 } catch (Exception $e) {
-    error_log("Smart Sleep Manager: Exception: " . $e->getMessage());
-    echo json_encode(['success' => false, 'error' => 'PHP Error: ' . $e->getMessage()]);
-} catch (Error $e) {
-    error_log("Smart Sleep Manager: Fatal error: " . $e->getMessage());
-    echo json_encode(['success' => false, 'error' => 'PHP Fatal Error: ' . $e->getMessage()]);
+    sendJsonResponse(['success' => false, 'error' => 'PHP Error: ' . $e->getMessage()]);
 }
-
-// Ensure output is flushed
-if (ob_get_length()) ob_end_flush();
 ?>
