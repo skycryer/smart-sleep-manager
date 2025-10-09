@@ -20,16 +20,27 @@ _(Enable MQTT)_:
 
 > Enable MQTT publishing of sleep status and system sensors. Perfect for Home Assistant integration.
 
-> **⚠️ MQTT Requirements:** MQTT functionality requires the `mosquitto-clients` package. If MQTT messages are not being sent, install it manually:
-> ```bash
-> # Method 1: Using slackpkg (recommended)
-> slackpkg install mosquitto
+> **⚠️ MQTT Requirements:** MQTT functionality requires the `mosquitto-clients` package. If MQTT messages are not being sent, install it manually in the **Unraid Terminal**:
 > 
-> # Method 2: Manual download and install
+> **Method 1 (Recommended):**
+> ```bash
+> # Open Unraid Terminal and run:
+> slackpkg install mosquitto
+> ```
+> 
+> **Method 2 (Manual Download):**
+> ```bash
+> # Open Unraid Terminal and run:
 > wget https://slackware.uk/slackware/slackware64-15.0/slackware64/n/mosquitto-2.0.15-x86_64-1.txz
 > installpkg mosquitto-2.0.15-x86_64-1.txz
+> rm mosquitto-2.0.15-x86_64-1.txz
 > ```
-> After installation, the "Run Sleep Check Now" button will send MQTT messages to your broker.n/scripts";
+> 
+> **How to access Unraid Terminal:**
+> - **WebUI**: Go to Tools → Terminal 
+> - **SSH**: Connect via SSH client to your Unraid IP
+> 
+> After installation, restart the plugin or click "Run Sleep Check Now" to test MQTT.n/scripts";
 $config = "/boot/config/plugins/$plugin/$plugin.cfg";
 $cfg = parse_plugin_cfg($plugin);
 
@@ -180,7 +191,7 @@ function checkMQTTRequirements() {
             if (xhr.readyState === 4 && xhr.status === 200) {
                 var response = xhr.responseText.trim();
                 if (response === 'missing') {
-                    alert('⚠️ Warning: mosquitto-clients package not found!\n\nMQTT messages will not be sent until you install it:\n\n1. Run: slackpkg install mosquitto\n2. Or download and install manually\n\nSee the MQTT section for detailed instructions.');
+                    alert('⚠️ Warning: mosquitto-clients package not found!\n\nMQTT messages will not be sent until you install it.\n\n📋 INSTALLATION STEPS:\n\n1. Go to Tools → Terminal in Unraid WebUI\n2. Run: slackpkg install mosquitto\n3. Restart plugin or click "Run Sleep Check Now"\n\nSee the MQTT section below for alternative installation methods.');
                 }
             }
         };
