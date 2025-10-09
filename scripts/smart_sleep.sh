@@ -466,12 +466,16 @@ main() {
     log_message "=== Smart Sleep Manager Check Started ==="
     echo "=== Smart Sleep Manager Check Started ==="
     
-    # Publish MQTT Discovery (only once per hour to avoid spam)
+    # Publish MQTT Discovery (only once per hour to avoid spam, unless forced)
     local current_hour=$(date +%H)
     local last_discovery_file="/tmp/smart_sleep_discovery_hour"
-    if [ ! -f "$last_discovery_file" ] || [ "$(cat "$last_discovery_file" 2>/dev/null)" != "$current_hour" ]; then
+    if [ "$FORCE_DISCOVERY" = true ] || [ ! -f "$last_discovery_file" ] || [ "$(cat "$last_discovery_file" 2>/dev/null)" != "$current_hour" ]; then
         publish_mqtt_discovery
         echo "$current_hour" > "$last_discovery_file"
+        if [ "$FORCE_DISCOVERY" = true ]; then
+            log_message "MQTT Discovery forced via --force-discovery parameter"
+            echo "🔧 MQTT Discovery: Forced execution"
+        fi
     fi
     
     # Force sleep if requested
@@ -608,5 +612,19 @@ main() {
 # ============================================================================
 # SCRIPT EXECUTION
 # ============================================================================
+
+# Handle command line parameters
+FORCE_DISCOVERY=false
+for arg in "$@"; do
+    case $arg in
+        --force-discovery)
+            FORCE_DISCOVERY=true
+            shift
+            ;;
+        *)
+            # Unknown argument, keep it
+            ;;
+    esac
+done
 
 main "$@"

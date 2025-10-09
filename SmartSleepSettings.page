@@ -151,6 +151,25 @@ function runSleepCheck() {
     }
 }
 
+function forceMqttDiscovery() {
+    if (confirm('Force MQTT Discovery now? This will send sensor configuration to Home Assistant immediately.')) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '/plugins/<?=$plugin?>/include/force_mqtt_discovery.php', true);
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                    // Show the output in a popup or console
+                    console.log('MQTT Discovery output:', xhr.responseText);
+                    alert('MQTT Discovery forced. Check Home Assistant → Settings → Devices & Services → MQTT for new sensors. Output logged to browser console.');
+                } else {
+                    alert('Error forcing MQTT Discovery. Status: ' + xhr.status);
+                }
+            }
+        };
+        xhr.send();
+    }
+}
+
 $(function() {
     // Check if dropdownchecklist plugin is available
     if ($.fn.dropdownchecklist) {
@@ -401,6 +420,11 @@ _(Manual Sleep Check)_:
 : <input type="button" value="Run Sleep Check Now" onclick="runSleepCheck()">
 
 > Manually execute the sleep check logic once. Useful for testing configuration.
+
+_(Force MQTT Discovery)_:
+: <input type="button" value="Force MQTT Discovery" onclick="forceMqttDiscovery()">
+
+> Force MQTT Discovery messages to Home Assistant immediately (bypasses hourly limit). Use this after changing MQTT settings or if sensors don't appear.
 
 _(Log File Location)_:
 : `/tmp/smart-sleep.log`
