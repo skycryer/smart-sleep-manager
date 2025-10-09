@@ -1,25 +1,5 @@
 Menu="Settings"
-Title="S> **Method 1 (Easiest - Recommended):**
-> 1. Go to **Apps** tab in Unraid WebUI
-> 2. Search for **"mosquitto"**
-> 3. Install **"Eclipse Mosquitto"** (MQTT broker with clients)
-> 4. **Important**: If using Docker container, set `RUN_INSECURE_MQTT_SERVER=1`
->    - Edit container → Environment Variables → Add: `RUN_INSECURE_MQTT_SERVER` = `1`
->    - This enables local MQTT communication (required for Mosquitto 2.0+)
-> 5. This will provide the `mosquitto_pub` command needed for MQTT
-> 
-> **Method 2 (Command Line):**
-> ```bash
-> # Open Unraid Terminal (Tools → Terminal) and run:
-> # Note: slackpkg may not be available on all Unraid versions
-> slackpkg install mosquitto
-> 
-> # Alternative - Manual download:
-> cd /tmp
-> wget https://slackware.uk/slackware/slackware64-15.0/slackware64/n/mosquitto-2.0.18-x86_64-1.txz
-> installpkg mosquitto-2.0.18-x86_64-1.txz
-> rm mosquitto-2.0.18-x86_64-1.txz
-> ```
+Title="Smart Sleep Manager"
 Icon="smartsleep.png"
 ---
 <?PHP
@@ -48,43 +28,17 @@ _(Enable MQTT)_:
 > - No additional installation needed
 > 
 > **✅ Option 2: Install mosquitto-clients on host system**
-> Install `mosquitto-clients` package manually in the **Unraid Terminal**:
-> 
-> **Method 1 (Recommended):**
 > ```bash
-> # Open Unraid Terminal and run:
+> # Method 1: Using slackpkg (recommended)
 > slackpkg install mosquitto
-> ```
 > 
-> **Method 2 (Manual Download):**
-> ```bash
-> # Open Unraid Terminal and run:
-> # Method 2a: Try common mosquitto versions
-> cd /tmp
-> wget https://slackware.uk/slackware/slackware64-15.0/slackware64/n/mosquitto-2.0.18-x86_64-1.txz
-> installpkg mosquitto-2.0.18-x86_64-1.txz
-> rm mosquitto-2.0.18-x86_64-1.txz
-> 
-> # Method 2b: If above fails, find current version at:
-> # https://packages.slackware.com/ (search for "mosquitto")
-> # Then download and install the .txz package
-> ```
-> 
-> **Note for Docker Container Users:**
-> If you installed Mosquitto via Docker (Apps tab), you may need to install
-> mosquitto-clients separately on the host system for this plugin to work:
-> ```bash
+> # Method 2: Manual download and install
 > cd /tmp
 > wget https://slackware.uk/slackware/slackware64-15.0/slackware64/n/mosquitto-2.0.18-x86_64-1.txz
 > installpkg mosquitto-2.0.18-x86_64-1.txz
 > rm mosquitto-2.0.18-x86_64-1.txz
 > ```
-> 
-> **How to access Unraid Terminal:**
-> - **WebUI**: Go to Tools → Terminal 
-> - **SSH**: Connect via SSH client to your Unraid IP
-> 
-> After installation, restart the plugin or click "Run Sleep Check Now" to test MQTT.n/scripts";
+> After installation, the "Run Sleep Check Now" button will send MQTT messages to your broker.n/scripts";
 $config = "/boot/config/plugins/$plugin/$plugin.cfg";
 $cfg = parse_plugin_cfg($plugin);
 
@@ -235,10 +189,7 @@ function checkMQTTRequirements() {
             if (xhr.readyState === 4 && xhr.status === 200) {
                 var response = xhr.responseText.trim();
                 if (response === 'missing') {
-                    alert('⚠️ Warning: mosquitto_pub not found!\n\nMQTT messages will not be sent until you install it.\n\n📋 EASY INSTALLATION:\n\n1. Go to APPS tab in Unraid WebUI\n2. Search for "mosquitto"\n3. Install "Eclipse Mosquitto"\n4. Set RUN_INSECURE_MQTT_SERVER=1 in container settings\n5. Restart plugin or click "Run Sleep Check Now"\n\n💡 Alternative: Install mosquitto-clients on host system (see MQTT section below).');
-                } else if (response === 'available') {
-                    // Don't show alert if mosquitto is available
-                    console.log('MQTT mosquitto_pub is available');
+                    alert('⚠️ Warning: mosquitto-clients package not found!\n\nMQTT messages will not be sent until you install it:\n\n1. Run: slackpkg install mosquitto\n2. Or download and install manually\n\nSee the MQTT section for detailed instructions.');
                 }
             }
         };
