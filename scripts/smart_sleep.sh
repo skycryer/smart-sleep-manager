@@ -189,13 +189,17 @@ publish_mqtt_discovery() {
         log_message "MQTT Discovery: Sent Status sensor to $status_topic"
         
         # Uptime sensor - extracts 'uptime' from JSON (time since boot, includes sleep)
-        local uptime_config="{\"name\":\"${hostname} Uptime\",\"state_topic\":\"${state_topic}\",\"value_template\":\"{{ value_json.uptime }}\",\"unique_id\":\"${hostname}_uptime\",\"unit_of_measurement\":\"s\",\"device_class\":\"duration\",\"state_class\":\"total_increasing\",\"icon\":\"mdi:clock-outline\",\"device\":${device_config}}"
+        # Template formats seconds into readable duration (e.g., "1d 2h 30m")
+        local uptime_template='{% set seconds = value_json.uptime | int %}{% set days = (seconds / 86400) | int %}{% set hours = ((seconds % 86400) / 3600) | int %}{% set minutes = ((seconds % 3600) / 60) | int %}{% if days > 0 %}{{ days }}d {% endif %}{% if hours > 0 or days > 0 %}{{ hours }}h {% endif %}{{ minutes }}m'
+        local uptime_config="{\"name\":\"${hostname} Uptime\",\"state_topic\":\"${state_topic}\",\"value_template\":\"${uptime_template}\",\"unique_id\":\"${hostname}_uptime\",\"icon\":\"mdi:clock-outline\",\"device\":${device_config}}"
         local uptime_topic="$(echo "$base_topic/uptime/config" | tr '[:upper:]' '[:lower:]')"
         send_mqtt_discovery "$uptime_topic" "$uptime_config"
         log_message "MQTT Discovery: Sent Uptime sensor to $uptime_topic"
 
         # Awake Time sensor - extracts 'awake_time' from JSON (time awake, excludes sleep)
-        local awake_config="{\"name\":\"${hostname} Awake Time\",\"state_topic\":\"${state_topic}\",\"value_template\":\"{{ value_json.awake_time }}\",\"unique_id\":\"${hostname}_awake_time\",\"unit_of_measurement\":\"s\",\"device_class\":\"duration\",\"state_class\":\"total_increasing\",\"icon\":\"mdi:eye-outline\",\"device\":${device_config}}"
+        # Template formats seconds into readable duration (e.g., "1d 2h 30m")
+        local awake_template='{% set seconds = value_json.awake_time | int %}{% set days = (seconds / 86400) | int %}{% set hours = ((seconds % 86400) / 3600) | int %}{% set minutes = ((seconds % 3600) / 60) | int %}{% if days > 0 %}{{ days }}d {% endif %}{% if hours > 0 or days > 0 %}{{ hours }}h {% endif %}{{ minutes }}m'
+        local awake_config="{\"name\":\"${hostname} Awake Time\",\"state_topic\":\"${state_topic}\",\"value_template\":\"${awake_template}\",\"unique_id\":\"${hostname}_awake_time\",\"icon\":\"mdi:eye-outline\",\"device\":${device_config}}"
         local awake_topic="$(echo "$base_topic/awake_time/config" | tr '[:upper:]' '[:lower:]')"
         send_mqtt_discovery "$awake_topic" "$awake_config"
         log_message "MQTT Discovery: Sent Awake Time sensor to $awake_topic"

@@ -3,7 +3,7 @@
 <!ENTITY name "smart.sleep.manager">
 <!ENTITY displayname "Smart Sleep Manager">
 <!ENTITY author "SkyCryer">
-<!ENTITY version      "2025.10.09.54">
+<!ENTITY version      "2025.10.09.55">
 <!ENTITY launch "Settings/SmartSleepSettings">
 <!ENTITY gitURL "https://github.com/skycryer/smart-sleep-manager/raw/main">
 <!ENTITY pluginURL "&gitURL;/smart.sleep.manager.plg">
@@ -36,6 +36,12 @@ MQTT Sensors:
 -->
 
 <CHANGES>
+###2025.10.09.55
+- FIXED: Time display now shows human-readable format (e.g., "1d 8h 30m")
+- Uptime and Awake Time sensors now use Jinja2 templates for formatting
+- Removed device_class: duration to prevent "115,165.00 s" display
+- Much better user experience in Home Assistant dashboard
+
 ###2025.10.09.54
 - Fixed awake time tracking initialization
 - Added reboot detection (resets awake time on reboot)
