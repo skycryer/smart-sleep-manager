@@ -120,6 +120,55 @@ send_mqtt() {
         # Check if mosquitto_pub is available (host system or Docker)
         if command -v mosquitto_pub >/dev/null 2>&1; then
             # Use host system mosquitto_pub
+            local full_topic="${MQTT_TOPIC_PREFIX}/$topic"
+            mosquitto_pub -h "$MQTT_HOST" -p "$MQTT_PORT" $auth_params -t "$full_topic" -m "$message" $retain_flag
+            log_message "MQTT published (host): $full_topic = $message"
+        else
+            # Try Docker mosquitto container
+            if docker ps --filter "name=mosquitto" --format "{{.Names}}" | grep -q mosquitto; then
+                local full_topic="${MQTT_TOPIC_PREFIX}/$topic"
+                docker exec mosquitto mosquitto_pub -h "$MQTT_HOST" -p "$MQTT_PORT" $auth_params -t "$full_topic" -m "$message" $retain_flag
+                log_message "MQTT published (docker): $full_topic = $message"
+            else
+                log_message "WARNING: mosquitto_pub not available (neither host system nor Docker container 'mosquitto' found)"
+            fi
+        fi
+    fi
+}
+
+# Send MQTT Discovery messages (no topic prefix)
+send_mqtt_discovery() {
+    if [ "$MQTT_ENABLED" = "true" ] && [ -n "$MQTT_HOST" ]; then
+        local topic="$1"
+        local message="$2"
+        local retain_flag="-r"  # Discovery messages should always be retained
+        
+        local auth_params=""
+        if [ -n "$MQTT_USERNAME" ]; then
+            auth_params="-u $MQTT_USERNAME"
+            if [ -n "$MQTT_PASSWORD" ]; then
+                auth_params="$auth_params -P $MQTT_PASSWORD"
+            fi
+        fi
+        
+        # Check if mosquitto_pub is available (host system or Docker)
+        if command -v mosquitto_pub >/dev/null 2>&1; then
+            # Use host system mosquitto_pub - no topic prefix for discovery
+            mosquitto_pub -h "$MQTT_HOST" -p "$MQTT_PORT" $auth_params -t "$topic" -m "$message" $retain_flag
+            log_message "MQTT Discovery published (host): $topic = $message"
+        else
+            # Try Docker mosquitto container
+            if docker ps --filter "name=mosquitto" --format "{{.Names}}" | grep -q mosquitto; then
+                docker exec mosquitto mosquitto_pub -h "$MQTT_HOST" -p "$MQTT_PORT" $auth_params -t "$topic" -m "$message" $retain_flag
+                log_message "MQTT Discovery published (docker): $topic = $message"
+            else
+                log_message "WARNING: mosquitto_pub not available (neither host system nor Docker container 'mosquitto' found)"
+            fi
+        fi
+    fi
+}
+        if command -v mosquitto_pub >/dev/null 2>&1; then
+            # Use host system mosquitto_pub
             mosquitto_pub -h "$MQTT_HOST" -p "$MQTT_PORT" $auth_params $retain_flag -t "$MQTT_TOPIC_PREFIX/$topic" -m "$message" 2>/dev/null
             log_message "MQTT published (host): $MQTT_TOPIC_PREFIX/$topic = $message"
         elif docker ps --format "table {{.Names}}" | grep -q "^mosquitto$" 2>/dev/null; then
@@ -148,48 +197,48 @@ publish_mqtt_discovery() {
         # Sleep Status sensor - extracts 'status' from JSON
         local status_config="{\"name\":\"${hostname} Sleep Status\",\"state_topic\":\"${state_topic}\",\"value_template\":\"{{ value_json.status }}\",\"unique_id\":\"${hostname}_sleep_status\",\"icon\":\"mdi:sleep\",\"device\":${device_config}}"
         local status_topic="$(echo "$base_topic/status/config" | tr '[:upper:]' '[:lower:]')"
-        send_mqtt "$status_topic" "$status_config"
+        send_mqtt_discovery "$status_topic" "$status_config"
         log_message "MQTT Discovery: Sent Status sensor to $status_topic"
         
         # Uptime sensor - extracts 'uptime' from JSON
         local uptime_config="{\"name\":\"${hostname} Uptime\",\"state_topic\":\"${state_topic}\",\"value_template\":\"{{ value_json.uptime }}\",\"unique_id\":\"${hostname}_uptime\",\"unit_of_measurement\":\"s\",\"device_class\":\"duration\",\"icon\":\"mdi:clock-outline\",\"device\":${device_config}}"
         local uptime_topic="$(echo "$base_topic/uptime/config" | tr '[:upper:]' '[:lower:]')"
-        send_mqtt "$uptime_topic" "$uptime_config"
+        send_mqtt_discovery "$uptime_topic" "$uptime_config"
         log_message "MQTT Discovery: Sent Uptime sensor to $uptime_topic"
         
         # Network Rate sensor - extracts 'network_rate' from JSON
         local network_config="{\"name\":\"${hostname} Network Rate\",\"state_topic\":\"${state_topic}\",\"value_template\":\"{{ value_json.network_rate }}\",\"unique_id\":\"${hostname}_network_rate\",\"unit_of_measurement\":\"B/s\",\"device_class\":\"data_rate\",\"icon\":\"mdi:network\",\"device\":${device_config}}"
         local network_topic="$(echo "$base_topic/network_rate/config" | tr '[:upper:]' '[:lower:]')"
-        send_mqtt "$network_topic" "$network_config"
+        send_mqtt_discovery "$network_topic" "$network_config"
         log_message "MQTT Discovery: Sent Network Rate sensor to $network_topic"
         
         # Active Disks sensor - extracts 'active_disks' from JSON
         local disks_config="{\"name\":\"${hostname} Active Disks\",\"state_topic\":\"${state_topic}\",\"value_template\":\"{{ value_json.active_disks }}\",\"unique_id\":\"${hostname}_active_disks\",\"unit_of_measurement\":\"disks\",\"icon\":\"mdi:harddisk\",\"device\":${device_config}}"
         local disks_topic="$(echo "$base_topic/active_disks/config" | tr '[:upper:]' '[:lower:]')"
-        send_mqtt "$disks_topic" "$disks_config"
+        send_mqtt_discovery "$disks_topic" "$disks_config"
         log_message "MQTT Discovery: Sent Active Disks sensor to $disks_topic"
         
         # Sleep Timer sensor - extracts 'sleep_timer' from JSON
         local timer_config="{\"name\":\"${hostname} Sleep Timer\",\"state_topic\":\"${state_topic}\",\"value_template\":\"{{ value_json.sleep_timer }}\",\"unique_id\":\"${hostname}_sleep_timer\",\"unit_of_measurement\":\"min\",\"device_class\":\"duration\",\"icon\":\"mdi:timer\",\"device\":${device_config}}"
         local timer_topic="$(echo "$base_topic/sleep_timer/config" | tr '[:upper:]' '[:lower:]')"
-        send_mqtt "$timer_topic" "$timer_config"
+        send_mqtt_discovery "$timer_topic" "$timer_config"
         log_message "MQTT Discovery: Sent Sleep Timer sensor to $timer_topic"
         
         # Hostname sensor - extracts 'hostname' from JSON
         local hostname_config="{\"name\":\"${hostname} Hostname\",\"state_topic\":\"${state_topic}\",\"value_template\":\"{{ value_json.hostname }}\",\"unique_id\":\"${hostname}_hostname\",\"icon\":\"mdi:server\",\"device\":${device_config}}"
         local hostname_topic="$(echo "$base_topic/hostname/config" | tr '[:upper:]' '[:lower:]')"
-        send_mqtt "$hostname_topic" "$hostname_config"
+        send_mqtt_discovery "$hostname_topic" "$hostname_config"
         log_message "MQTT Discovery: Sent Hostname sensor to $hostname_topic"
         
         # Last Check sensor - extracts 'last_check' from JSON
         local lastcheck_config="{\"name\":\"${hostname} Last Check\",\"state_topic\":\"${state_topic}\",\"value_template\":\"{{ value_json.last_check }}\",\"unique_id\":\"${hostname}_last_check\",\"device_class\":\"timestamp\",\"icon\":\"mdi:clock-check\",\"device\":${device_config}}"
         local lastcheck_topic="$(echo "$base_topic/last_check/config" | tr '[:upper:]' '[:lower:]')"
-        send_mqtt "$lastcheck_topic" "$lastcheck_config"
+        send_mqtt_discovery "$lastcheck_topic" "$lastcheck_config"
         log_message "MQTT Discovery: Sent Last Check sensor to $lastcheck_topic"
         
         # Remove old Test Sensor if it exists
         local old_test_topic="$(echo "$base_topic/status/config" | tr '[:upper:]' '[:lower:]')"
-        send_mqtt "$old_test_topic" ""
+        send_mqtt_discovery "$old_test_topic" ""
         log_message "MQTT Discovery: Sent empty config to remove old test sensor"
         
         echo "✅ MQTT Discovery: 7 sensors created + old test sensor removed"
