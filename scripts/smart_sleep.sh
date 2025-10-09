@@ -167,19 +167,6 @@ send_mqtt_discovery() {
         fi
     fi
 }
-        if command -v mosquitto_pub >/dev/null 2>&1; then
-            # Use host system mosquitto_pub
-            mosquitto_pub -h "$MQTT_HOST" -p "$MQTT_PORT" $auth_params $retain_flag -t "$MQTT_TOPIC_PREFIX/$topic" -m "$message" 2>/dev/null
-            log_message "MQTT published (host): $MQTT_TOPIC_PREFIX/$topic = $message"
-        elif docker ps --format "table {{.Names}}" | grep -q "^mosquitto$" 2>/dev/null; then
-            # Use Docker container mosquitto_pub
-            docker exec mosquitto mosquitto_pub -h "$MQTT_HOST" -p "$MQTT_PORT" $auth_params $retain_flag -t "$MQTT_TOPIC_PREFIX/$topic" -m "$message" 2>/dev/null
-            log_message "MQTT published (docker): $MQTT_TOPIC_PREFIX/$topic = $message"
-        else
-            log_message "WARNING: mosquitto_pub not available (neither host system nor Docker container 'mosquitto' found)"
-        fi
-    fi
-}
 
 # MQTT Discovery for Home Assistant - creates sensors automatically
 publish_mqtt_discovery() {

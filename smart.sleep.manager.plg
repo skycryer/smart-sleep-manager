@@ -3,7 +3,7 @@
 <!ENTITY name "smart.sleep.manager">
 <!ENTITY displayname "Smart Sleep Manager">
 <!ENTITY author "SkyCryer">
-<!ENTITY version      "2025.10.09.49">
+<!ENTITY version      "2025.10.09.50">
 <!ENTITY launch "Settings/SmartSleepSettings">
 <!ENTITY gitURL "https://github.com/skycryer/smart-sleep-manager/raw/main">
 <!ENTITY pluginURL "&gitURL;/smart.sleep.manager.plg">
@@ -36,6 +36,12 @@ MQTT Sensors:
 -->
 
 <CHANGES>
+###2025.10.09.50
+- CRITICAL FIX: Removed duplicate/broken MQTT code in smart_sleep.sh
+- Fixed MQTT Discovery for Home Assistant - discovery messages now work correctly
+- Cleaned up send_mqtt_discovery() function structure (lines 170-182 removed)
+- Home Assistant sensors should now auto-detect properly
+
 ###2025.10.09.34
 - Added MQTT requirements warning and installation instructions
 - Real-time mosquitto_pub availability check when enabling MQTT
