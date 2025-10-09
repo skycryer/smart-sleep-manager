@@ -3,7 +3,7 @@
 <!ENTITY name "smart.sleep.manager">
 <!ENTITY displayname "Smart Sleep Manager">
 <!ENTITY author "SkyCryer">
-<!ENTITY version "2025.10.09.33">
+<!ENTITY version "2025.10.09.34">
 <!ENTITY launch "Settings/SmartSleepSettings">
 <!ENTITY gitURL "https://github.com/skycryer/smart-sleep-manager/raw/main">
 <!ENTITY pluginURL "&gitURL;/smart.sleep.manager.plg">
@@ -36,6 +36,14 @@ MQTT Sensors:
 -->
 
 <CHANGES>
+###2025.10.09.34
+- Added MQTT requirements warning and installation instructions
+- Real-time mosquitto_pub availability check when enabling MQTT
+- User-friendly alerts with manual installation commands
+- Fixed duplicate MQTT section in settings page
+- Clear step-by-step instructions for package installation
+- Interactive feedback when MQTT is enabled without mosquitto-clients
+
 ###2025.10.09.33
 - Completely removed Telegram notifications from settings UI
 - Cleaned up duplicate MQTT section in settings page
@@ -177,6 +185,10 @@ echo "Plugin directories created"
 
 <FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/include/run_sleep_check.php">
 <URL>&gitURL;/include/run_sleep_check.php</URL>
+</FILE>
+
+<FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/include/check_mosquitto.php">
+<URL>&gitURL;/include/check_mosquitto.php</URL>
 </FILE>
 
 <FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/include/SleepMode.php">
