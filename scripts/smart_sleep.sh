@@ -204,15 +204,7 @@ publish_mqtt_sensors() {
         local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
         local uptime_seconds=$(awk '{print int($1)}' /proc/uptime 2>/dev/null || echo "0")
         
-        # Publish individual sensors
-        send_mqtt "hostname" "$hostname"
-        send_mqtt "uptime" "$uptime_seconds"
-        send_mqtt "network_rate" "${CURRENT_NETWORK_RATE:-0}"
-        send_mqtt "active_disks" "${ACTIVE_DISK_COUNT:-0}"
-        send_mqtt "sleep_timer" "${SLEEP_TIMER_MINUTES:-0}"
-        send_mqtt "last_check" "$timestamp"
-        
-        # Publish combined status JSON for Home Assistant
+        # Publish combined status JSON for Home Assistant Discovery sensors
         local status_json="{\"hostname\":\"$hostname\",\"uptime\":$uptime_seconds,\"network_rate\":${CURRENT_NETWORK_RATE:-0},\"active_disks\":${ACTIVE_DISK_COUNT:-0},\"sleep_timer\":${SLEEP_TIMER_MINUTES:-0},\"status\":\"$SLEEP_STATUS\",\"last_check\":\"$timestamp\"}"
         send_mqtt "state" "$status_json"
         
