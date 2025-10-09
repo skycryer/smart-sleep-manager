@@ -68,6 +68,7 @@ if (isset($config['mqtt_enabled']) && $config['mqtt_enabled'] === 'true' && !emp
         "$base_topic/test_sensor/config",  // Old test sensor if it exists
         "$base_topic/status/config",
         "$base_topic/uptime/config",
+        "$base_topic/awake_time/config",
         "$base_topic/network_rate/config",
         "$base_topic/active_disks/config",
         "$base_topic/sleep_timer/config",

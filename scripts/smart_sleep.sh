@@ -9,6 +9,7 @@ CONFIG_FILE="/boot/config/plugins/$PLUGIN_NAME/$PLUGIN_NAME.cfg"
 LOG_FILE="/tmp/smart-sleep.log"
 ACTIVITY_CHECK_FILE="/tmp/last_activity"
 NETWORK_STATE_FILE="/tmp/network_total"
+AWAKE_TIME_FILE="/boot/config/plugins/$PLUGIN_NAME/awake_time_data"
 
 # Global variables for MQTT status reporting
 SLEEP_STATUS="unknown"
@@ -187,12 +188,18 @@ publish_mqtt_discovery() {
         send_mqtt_discovery "$status_topic" "$status_config"
         log_message "MQTT Discovery: Sent Status sensor to $status_topic"
         
-        # Uptime sensor - extracts 'uptime' from JSON
+        # Uptime sensor - extracts 'uptime' from JSON (time since boot, includes sleep)
         local uptime_config="{\"name\":\"${hostname} Uptime\",\"state_topic\":\"${state_topic}\",\"value_template\":\"{{ value_json.uptime }}\",\"unique_id\":\"${hostname}_uptime\",\"unit_of_measurement\":\"s\",\"device_class\":\"duration\",\"state_class\":\"total_increasing\",\"icon\":\"mdi:clock-outline\",\"device\":${device_config}}"
         local uptime_topic="$(echo "$base_topic/uptime/config" | tr '[:upper:]' '[:lower:]')"
         send_mqtt_discovery "$uptime_topic" "$uptime_config"
         log_message "MQTT Discovery: Sent Uptime sensor to $uptime_topic"
-        
+
+        # Awake Time sensor - extracts 'awake_time' from JSON (time awake, excludes sleep)
+        local awake_config="{\"name\":\"${hostname} Awake Time\",\"state_topic\":\"${state_topic}\",\"value_template\":\"{{ value_json.awake_time }}\",\"unique_id\":\"${hostname}_awake_time\",\"unit_of_measurement\":\"s\",\"device_class\":\"duration\",\"state_class\":\"total_increasing\",\"icon\":\"mdi:eye-outline\",\"device\":${device_config}}"
+        local awake_topic="$(echo "$base_topic/awake_time/config" | tr '[:upper:]' '[:lower:]')"
+        send_mqtt_discovery "$awake_topic" "$awake_config"
+        log_message "MQTT Discovery: Sent Awake Time sensor to $awake_topic"
+
         # Network Rate sensor - extracts 'network_rate' from JSON
         local network_config="{\"name\":\"${hostname} Network Rate\",\"state_topic\":\"${state_topic}\",\"value_template\":\"{{ value_json.network_rate }}\",\"unique_id\":\"${hostname}_network_rate\",\"unit_of_measurement\":\"B/s\",\"device_class\":\"data_rate\",\"icon\":\"mdi:network\",\"device\":${device_config}}"
         local network_topic="$(echo "$base_topic/network_rate/config" | tr '[:upper:]' '[:lower:]')"
@@ -223,10 +230,37 @@ publish_mqtt_discovery() {
         send_mqtt_discovery "$lastcheck_topic" "$lastcheck_config"
         log_message "MQTT Discovery: Sent Last Check sensor to $lastcheck_topic"
 
-        echo "✅ MQTT Discovery: 7 sensors created successfully"
+        echo "✅ MQTT Discovery: 8 sensors created successfully"
         
         log_message "MQTT Discovery: Published sensor configurations for Home Assistant"
     fi
+}
+
+get_awake_time() {
+    local current_uptime=$(awk '{print int($1)}' /proc/uptime 2>/dev/null || echo "0")
+    local awake_time=0
+
+    # Read stored awake time data if exists
+    if [ -f "$AWAKE_TIME_FILE" ]; then
+        local accumulated_awake=$(grep "^accumulated=" "$AWAKE_TIME_FILE" | cut -d'=' -f2)
+        local last_wake_uptime=$(grep "^last_wake_uptime=" "$AWAKE_TIME_FILE" | cut -d'=' -f2)
+
+        # Calculate time since last wake + accumulated time
+        if [ -n "$accumulated_awake" ] && [ -n "$last_wake_uptime" ]; then
+            local current_session=$((current_uptime - last_wake_uptime))
+            awake_time=$((accumulated_awake + current_session))
+        else
+            # First run after boot - initialize
+            awake_time=$current_uptime
+        fi
+    else
+        # First run ever - awake time = uptime
+        awake_time=$current_uptime
+        echo "accumulated=0" > "$AWAKE_TIME_FILE"
+        echo "last_wake_uptime=$current_uptime" >> "$AWAKE_TIME_FILE"
+    fi
+
+    echo "$awake_time"
 }
 
 publish_mqtt_sensors() {
@@ -234,12 +268,13 @@ publish_mqtt_sensors() {
         local hostname=$(hostname)
         local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
         local uptime_seconds=$(awk '{print int($1)}' /proc/uptime 2>/dev/null || echo "0")
-        
+        local awake_time=$(get_awake_time)
+
         # Publish combined status JSON for Home Assistant Discovery sensors
-        local status_json="{\"hostname\":\"$hostname\",\"uptime\":$uptime_seconds,\"network_rate\":${CURRENT_NETWORK_RATE:-0},\"active_disks\":${ACTIVE_DISK_COUNT:-0},\"sleep_timer\":${SLEEP_TIMER_MINUTES:-0},\"status\":\"$SLEEP_STATUS\",\"last_check\":\"$timestamp\"}"
+        local status_json="{\"hostname\":\"$hostname\",\"uptime\":$uptime_seconds,\"awake_time\":$awake_time,\"network_rate\":${CURRENT_NETWORK_RATE:-0},\"active_disks\":${ACTIVE_DISK_COUNT:-0},\"sleep_timer\":${SLEEP_TIMER_MINUTES:-0},\"status\":\"$SLEEP_STATUS\",\"last_check\":\"$timestamp\"}"
         send_mqtt "state" "$status_json"
-        
-        log_message "MQTT sensors published: status=$SLEEP_STATUS, uptime=${uptime_seconds}s, network=${CURRENT_NETWORK_RATE:-0}B/s, active_disks=${ACTIVE_DISK_COUNT:-0}"
+
+        log_message "MQTT sensors published: status=$SLEEP_STATUS, uptime=${uptime_seconds}s, awake=${awake_time}s, network=${CURRENT_NETWORK_RATE:-0}B/s, active_disks=${ACTIVE_DISK_COUNT:-0}"
     fi
 }
 
@@ -271,10 +306,47 @@ s3_pre_sleep_activity() {
     echo "✅ Sleep preparation completed"
 }
 
+update_awake_time_before_sleep() {
+    local current_uptime=$(awk '{print int($1)}' /proc/uptime 2>/dev/null || echo "0")
+
+    if [ -f "$AWAKE_TIME_FILE" ]; then
+        local accumulated_awake=$(grep "^accumulated=" "$AWAKE_TIME_FILE" | cut -d'=' -f2)
+        local last_wake_uptime=$(grep "^last_wake_uptime=" "$AWAKE_TIME_FILE" | cut -d'=' -f2)
+
+        if [ -n "$accumulated_awake" ] && [ -n "$last_wake_uptime" ]; then
+            local current_session=$((current_uptime - last_wake_uptime))
+            local total_awake=$((accumulated_awake + current_session))
+
+            # Save accumulated awake time before sleep
+            echo "accumulated=$total_awake" > "$AWAKE_TIME_FILE"
+            echo "last_wake_uptime=$current_uptime" >> "$AWAKE_TIME_FILE"
+
+            log_message "Awake time updated before sleep: ${total_awake}s"
+        fi
+    fi
+}
+
+reset_awake_time_after_wake() {
+    local current_uptime=$(awk '{print int($1)}' /proc/uptime 2>/dev/null || echo "0")
+
+    if [ -f "$AWAKE_TIME_FILE" ]; then
+        local accumulated_awake=$(grep "^accumulated=" "$AWAKE_TIME_FILE" | cut -d'=' -f2)
+
+        # Update last_wake_uptime to current uptime after wake
+        echo "accumulated=$accumulated_awake" > "$AWAKE_TIME_FILE"
+        echo "last_wake_uptime=$current_uptime" >> "$AWAKE_TIME_FILE"
+
+        log_message "Awake time tracker reset after wake: accumulated=${accumulated_awake}s, new session starts at uptime=${current_uptime}s"
+    fi
+}
+
 s3_post_wake_activity() {
     log_message "=== Post-Wake Activities ==="
     echo "🌅 System awake!"
-    
+
+    # Reset awake time tracker after wake
+    reset_awake_time_after_wake
+
     # Force gigabit speed if enabled
     if [ "$FORCE_GIGABIT" = "true" ] && command -v ethtool >/dev/null 2>&1; then
         log_message "Forcing gigabit speed on $NETWORK_INTERFACE"
@@ -324,29 +396,32 @@ s3_post_wake_activity() {
 }
 
 execute_sleep() {
+    # Update awake time before sleep
+    update_awake_time_before_sleep
+
     case "$SLEEP_METHOD" in
         "dynamix_s3")
             log_message "=== Executing Dynamix S3 Sleep ==="
             echo "🌙 Using Dynamix S3 Sleep method..."
-            
+
             s3_pre_sleep_activity
-            
+
             log_message "Entering S3 sleep mode: echo -n mem > /sys/power/state"
             echo "🌙 Entering S3 sleep mode..."
             echo ""
-            
+
             echo -n mem > /sys/power/state
-            
+
             echo ""
             log_message "System awoke from S3 sleep"
             echo "🌅 System awoke!"
-            
+
             s3_post_wake_activity
             ;;
         "systemctl_suspend")
             log_message "=== Executing systemctl suspend ==="
             echo "🌙 Using systemctl suspend..."
-            
+
             s3_pre_sleep_activity
             systemctl suspend
             s3_post_wake_activity
@@ -357,7 +432,7 @@ execute_sleep() {
             return 1
             ;;
     esac
-    
+
     log_message "Sleep cycle completed"
 }
 
