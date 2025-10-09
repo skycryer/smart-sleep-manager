@@ -3,7 +3,7 @@
 <!ENTITY name "smart.sleep.manager">
 <!ENTITY displayname "Smart Sleep Manager">
 <!ENTITY author "SkyCryer">
-<!ENTITY version "2025.10.09.25">
+<!ENTITY version "2025.10.09.26">
 <!ENTITY launch "Settings/SmartSleepSettings">
 <!ENTITY gitURL "https://github.com/skycryer/smart-sleep-manager/raw/main">
 <!ENTITY pluginURL "&gitURL;/smart.sleep.manager.plg">
@@ -37,6 +37,13 @@ MQTT Sensors:
 -->
 
 <CHANGES>
+###2025.10.09.26
+- Fixed MQTT configuration persistence issue
+- Added automatic migration for existing configs without MQTT fields
+- Enhanced config loading with fallback defaults
+- Added debug logging for configuration troubleshooting
+- MQTT settings now properly persist after Apply button
+
 ###2025.10.09.25
 - Added MQTT support for real-time monitoring
 - MQTT status updates sent on every sleep check cycle
