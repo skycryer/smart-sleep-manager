@@ -3,7 +3,7 @@
 <!ENTITY name "smart.sleep.manager">
 <!ENTITY displayname "Smart Sleep Manager">
 <!ENTITY author "SkyCryer">
-<!ENTITY version "2025.10.09.35">
+<!ENTITY version "2025.10.09.37">
 <!ENTITY launch "Settings/SmartSleepSettings">
 <!ENTITY gitURL "https://github.com/skycryer/smart-sleep-manager/raw/main">
 <!ENTITY pluginURL "&gitURL;/smart.sleep.manager.plg">
@@ -140,21 +140,46 @@ if ! command -v mosquitto_pub &gt;/dev/null 2&gt;&amp;1; then
     if command -v slackpkg &gt;/dev/null 2&gt;&amp;1; then
         echo "Attempting to install mosquitto via slackpkg..."
         slackpkg -batch=on -default_answer=y install mosquitto 2&gt;/dev/null || {
-            echo "slackpkg install failed, trying manual download..."
+            echo "slackpkg install failed, trying alternative approach..."
             cd /tmp
-            wget -q https://slackware.uk/slackware/slackware64-15.0/slackware64/n/mosquitto-2.0.15-x86_64-1.txz 2&gt;/dev/null &amp;&amp; {
-                installpkg mosquitto-2.0.15-x86_64-1.txz 2&gt;/dev/null
-                rm -f mosquitto-2.0.15-x86_64-1.txz
-            } || {
+            
+            # Try common mosquitto package names
+            for version in "2.0.18" "2.0.17" "2.0.16" "2.0.15"; do
+                PACKAGE_URL="https://slackware.uk/slackware/slackware64-15.0/slackware64/n/mosquitto-${version}-x86_64-1.txz"
+                echo "Trying mosquitto version $version..."
+                if wget -q "$PACKAGE_URL" 2&gt;/dev/null; then
+                    installpkg "mosquitto-${version}-x86_64-1.txz" 2&gt;/dev/null
+                    rm -f "mosquitto-${version}-x86_64-1.txz"
+                    echo "mosquitto $version installed successfully"
+                    break
+                fi
+            done
+            
+            # If all versions failed, show error
+            if ! command -v mosquitto_pub &gt;/dev/null 2&gt;&amp;1; then
                 echo "WARNING: Could not install mosquitto-clients automatically."
                 echo "MQTT features will be disabled until mosquitto-clients is manually installed."
-                echo "Install manually with: slackpkg install mosquitto"
-            }
+                echo ""
+                echo "RECOMMENDED: Install via Apps tab in Unraid WebUI:"
+                echo "  1. Go to Apps tab"
+                echo "  2. Search for 'mosquitto'"
+                echo "  3. Install 'Eclipse Mosquitto'"
+                echo ""
+                echo "Alternative: Install manually with: slackpkg install mosquitto"
+                echo "Or visit: https://packages.slackware.com/ to find current package"
+            fi
         }
     else
-        echo "WARNING: mosquitto_pub not found and slackpkg not available."
+        echo "WARNING: mosquitto_pub not found."
         echo "MQTT features will be disabled until mosquitto-clients is installed."
-        echo "Install manually with package manager or download mosquitto package"
+        echo ""
+        echo "RECOMMENDED: Install via Apps tab in Unraid WebUI:"
+        echo "  1. Go to Apps tab"
+        echo "  2. Search for 'mosquitto'"
+        echo "  3. Install 'Eclipse Mosquitto'"
+        echo ""
+        echo "Alternative: Install via command line with:"
+        echo "  slackpkg install mosquitto"
     fi
     
     # Check if installation was successful
