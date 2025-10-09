@@ -40,6 +40,13 @@ $telegram_chat_id = $_POST['telegram_chat_id'] ?? '';
 $telegram_notify_standby = $_POST['telegram_notify_standby'] ?? 'true';
 $telegram_notify_sleep = $_POST['telegram_notify_sleep'] ?? 'true';
 $telegram_notify_blocked = $_POST['telegram_notify_blocked'] ?? 'false';
+$mqtt_enabled = $_POST['mqtt_enabled'] ?? 'false';
+$mqtt_host = $_POST['mqtt_host'] ?? '';
+$mqtt_port = (int)($_POST['mqtt_port'] ?? 1883);
+$mqtt_username = $_POST['mqtt_username'] ?? '';
+$mqtt_password = $_POST['mqtt_password'] ?? '';
+$mqtt_topic_prefix = $_POST['mqtt_topic_prefix'] ?? 'unraid/smart-sleep';
+$mqtt_retain = $_POST['mqtt_retain'] ?? 'true';
 $wol_options = $_POST['wol_options'] ?? 'g';
 $restart_samba = $_POST['restart_samba'] ?? 'true';
 $force_gigabit = $_POST['force_gigabit'] ?? 'false';
@@ -55,6 +62,10 @@ if ($network_threshold < 0) {
     $network_threshold = 102400;
 }
 
+if ($mqtt_port < 1 || $mqtt_port > 65535) {
+    $mqtt_port = 1883;
+}
+
 // Validate cron schedule format (basic validation)
 if (!preg_match('/^[\d\*\/,-]+\s+[\d\*\/,-]+\s+[\d\*\/,-]+\s+[\d\*\/,-]+\s+[\d\*\/,-]+$/', $cron_schedule)) {
     $cron_schedule = '*/5 * * * *'; // Default fallback
@@ -63,6 +74,12 @@ if (!preg_match('/^[\d\*\/,-]+\s+[\d\*\/,-]+\s+[\d\*\/,-]+\s+[\d\*\/,-]+\s+[\d\*
 // Sanitize telegram inputs
 $telegram_bot_token = preg_replace('/[^0-9A-Za-z:_-]/', '', $telegram_bot_token);
 $telegram_chat_id = preg_replace('/[^0-9-]/', '', $telegram_chat_id);
+
+// Sanitize MQTT inputs
+$mqtt_host = preg_replace('/[^0-9A-Za-z.\-]/', '', $mqtt_host);
+$mqtt_username = trim($mqtt_username);
+$mqtt_password = trim($mqtt_password);
+$mqtt_topic_prefix = preg_replace('/[^0-9A-Za-z\/\-_]/', '', $mqtt_topic_prefix);
 
 // Create configuration content
 $config_content = [
@@ -80,6 +97,13 @@ $config_content = [
     "telegram_notify_standby=\"$telegram_notify_standby\"",
     "telegram_notify_sleep=\"$telegram_notify_sleep\"",
     "telegram_notify_blocked=\"$telegram_notify_blocked\"",
+    "mqtt_enabled=\"$mqtt_enabled\"",
+    "mqtt_host=\"$mqtt_host\"",
+    "mqtt_port=\"$mqtt_port\"",
+    "mqtt_username=\"$mqtt_username\"",
+    "mqtt_password=\"$mqtt_password\"",
+    "mqtt_topic_prefix=\"$mqtt_topic_prefix\"",
+    "mqtt_retain=\"$mqtt_retain\"",
     "wol_options=\"$wol_options\"",
     "restart_samba=\"$restart_samba\"",
     "force_gigabit=\"$force_gigabit\"",

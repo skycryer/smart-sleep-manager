@@ -10,6 +10,12 @@ LOG_FILE="/tmp/smart-sleep.log"
 ACTIVITY_CHECK_FILE="/tmp/last_activity"
 NETWORK_STATE_FILE="/tmp/network_total"
 
+# Global variables for MQTT status reporting
+SLEEP_STATUS="unknown"
+CURRENT_NETWORK_RATE=0
+ACTIVE_DISK_COUNT=0
+SLEEP_TIMER_MINUTES=0
+
 # Force sleep flag for manual execution
 FORCE_SLEEP=false
 if [[ "$1" == "--force-sleep" ]]; then
@@ -36,6 +42,13 @@ load_config() {
     TELEGRAM_NOTIFY_STANDBY="true"
     TELEGRAM_NOTIFY_SLEEP="true"
     TELEGRAM_NOTIFY_BLOCKED="false"
+    MQTT_ENABLED="false"
+    MQTT_HOST=""
+    MQTT_PORT="1883"
+    MQTT_USERNAME=""
+    MQTT_PASSWORD=""
+    MQTT_TOPIC_PREFIX="unraid/smart-sleep"
+    MQTT_RETAIN="true"
     WOL_OPTIONS="g"
     RESTART_SAMBA="true"
     FORCE_GIGABIT="false"
@@ -61,6 +74,13 @@ load_config() {
                 telegram_notify_standby) TELEGRAM_NOTIFY_STANDBY="$value" ;;
                 telegram_notify_sleep) TELEGRAM_NOTIFY_SLEEP="$value" ;;
                 telegram_notify_blocked) TELEGRAM_NOTIFY_BLOCKED="$value" ;;
+                mqtt_enabled) MQTT_ENABLED="$value" ;;
+                mqtt_host) MQTT_HOST="$value" ;;
+                mqtt_port) MQTT_PORT="$value" ;;
+                mqtt_username) MQTT_USERNAME="$value" ;;
+                mqtt_password) MQTT_PASSWORD="$value" ;;
+                mqtt_topic_prefix) MQTT_TOPIC_PREFIX="$value" ;;
+                mqtt_retain) MQTT_RETAIN="$value" ;;
                 wol_options) WOL_OPTIONS="$value" ;;
                 restart_samba) RESTART_SAMBA="$value" ;;
                 force_gigabit) FORCE_GIGABIT="$value" ;;
@@ -107,6 +127,56 @@ $message"
              -d parse_mode="Markdown" > /dev/null 2>&1
         
         log_message "Telegram notification sent: $message"
+    fi
+}
+
+send_mqtt() {
+    if [ "$MQTT_ENABLED" = "true" ] && [ -n "$MQTT_HOST" ]; then
+        local topic="$1"
+        local message="$2"
+        local retain_flag=""
+        
+        if [ "$MQTT_RETAIN" = "true" ]; then
+            retain_flag="-r"
+        fi
+        
+        local auth_params=""
+        if [ -n "$MQTT_USERNAME" ]; then
+            auth_params="-u $MQTT_USERNAME"
+            if [ -n "$MQTT_PASSWORD" ]; then
+                auth_params="$auth_params -P $MQTT_PASSWORD"
+            fi
+        fi
+        
+        # Check if mosquitto_pub is available
+        if command -v mosquitto_pub >/dev/null 2>&1; then
+            mosquitto_pub -h "$MQTT_HOST" -p "$MQTT_PORT" $auth_params $retain_flag -t "$MQTT_TOPIC_PREFIX/$topic" -m "$message" 2>/dev/null
+            log_message "MQTT published: $MQTT_TOPIC_PREFIX/$topic = $message"
+        else
+            log_message "WARNING: mosquitto_pub not available for MQTT publishing"
+        fi
+    fi
+}
+
+publish_mqtt_sensors() {
+    if [ "$MQTT_ENABLED" = "true" ] && [ -n "$MQTT_HOST" ]; then
+        local hostname=$(hostname)
+        local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+        local uptime_seconds=$(awk '{print int($1)}' /proc/uptime 2>/dev/null || echo "0")
+        
+        # Publish individual sensors
+        send_mqtt "hostname" "$hostname"
+        send_mqtt "uptime" "$uptime_seconds"
+        send_mqtt "network_rate" "${CURRENT_NETWORK_RATE:-0}"
+        send_mqtt "active_disks" "${ACTIVE_DISK_COUNT:-0}"
+        send_mqtt "sleep_timer" "${SLEEP_TIMER_MINUTES:-0}"
+        send_mqtt "last_check" "$timestamp"
+        
+        # Publish combined status JSON for Home Assistant
+        local status_json="{\"hostname\":\"$hostname\",\"uptime\":$uptime_seconds,\"network_rate\":${CURRENT_NETWORK_RATE:-0},\"active_disks\":${ACTIVE_DISK_COUNT:-0},\"sleep_timer\":${SLEEP_TIMER_MINUTES:-0},\"status\":\"$SLEEP_STATUS\",\"last_check\":\"$timestamp\"}"
+        send_mqtt "state" "$status_json"
+        
+        log_message "MQTT sensors published: status=$SLEEP_STATUS, uptime=${uptime_seconds}s, network=${CURRENT_NETWORK_RATE:-0}B/s, active_disks=${ACTIVE_DISK_COUNT:-0}"
     fi
 }
 
@@ -273,6 +343,9 @@ check_array_activity() {
         fi
     done
     
+    # Set global variable for MQTT
+    ACTIVE_DISK_COUNT=${#active_disks[@]}
+    
     if [ ${#active_disks[@]} -gt 0 ]; then
         local active_list=$(IFS=', '; echo "${active_disks[*]}")
         log_message "ACTIVE ARRAY DISKS (not in standby): $active_list"
@@ -281,6 +354,8 @@ check_array_activity() {
         # Reset timer
         echo "$(date)" > "$ACTIVITY_CHECK_FILE"
         log_message "Array activity detected - sleep skipped"
+        
+        SLEEP_STATUS="blocked_disks"
         
         if [ "$TELEGRAM_NOTIFY_BLOCKED" = "true" ]; then
             send_telegram "💤 *Sleep blocked* - Active array disks:
@@ -344,6 +419,7 @@ check_network_activity() {
             echo "Network activity above threshold: ${network_rate_per_sec} > ${NETWORK_THRESHOLD_BYTES} Bytes/s"
             has_network_activity=true
             echo "$(date)" > "$ACTIVITY_CHECK_FILE"
+            SLEEP_STATUS="blocked_network"
         fi
     else
         log_message "First network measurement - baseline created"
@@ -371,6 +447,8 @@ main() {
     # Check if plugin is enabled (unless force sleep)
     if [ "$ENABLED" != "true" ] && [ "$FORCE_SLEEP" != true ]; then
         log_message "Smart Sleep Manager is disabled"
+        SLEEP_STATUS="disabled"
+        publish_mqtt_sensors
         exit 0
     fi
     
@@ -381,6 +459,9 @@ main() {
     if [ "$FORCE_SLEEP" = true ]; then
         log_message "Force sleep requested - executing immediately"
         echo "🌙 FORCE SLEEP: Executing sleep immediately"
+        
+        SLEEP_STATUS="force_sleep"
+        publish_mqtt_sensors
         
         if [ "$TELEGRAM_NOTIFY_SLEEP" = "true" ]; then
             send_telegram "🌙 *Forced Sleep Activated!*
@@ -396,6 +477,8 @@ main() {
     if ! check_array_status; then
         log_message "Array is not ready - sleep skipped"
         echo "Array is not ready - sleep skipped"
+        SLEEP_STATUS="array_not_ready"
+        publish_mqtt_sensors
         exit 0
     fi
     
@@ -404,6 +487,8 @@ main() {
     
     # Check array disk activity
     if ! check_array_activity; then
+        # Publish MQTT with current status (blocked_disks was set in check_array_activity)
+        publish_mqtt_sensors
         exit 0  # Active disks found, exit
     fi
     
@@ -413,6 +498,8 @@ main() {
         echo ""
         echo "💤 SLEEP BLOCKED: Network traffic too high"
         echo ""
+        # Publish MQTT with current status (blocked_network was set in check_network_activity)
+        publish_mqtt_sensors
         exit 0
     fi
     
@@ -427,8 +514,17 @@ main() {
         
         log_message "All conditions met for $standby_minutes minutes"
         
+        # Set timer for MQTT
+        SLEEP_TIMER_MINUTES=$((IDLE_TIME_MINUTES - standby_minutes))
+        if [ "$SLEEP_TIMER_MINUTES" -lt 0 ]; then
+            SLEEP_TIMER_MINUTES=0
+        fi
+        
         if [ "$standby_minutes" -ge "$IDLE_TIME_MINUTES" ]; then
             log_message "System going to sleep (all conditions met for $standby_minutes minutes)"
+            
+            SLEEP_STATUS="sleeping"
+            publish_mqtt_sensors
             
             if [ "$TELEGRAM_NOTIFY_SLEEP" = "true" ]; then
                 send_telegram "🌙 *Server going to sleep!*
@@ -445,8 +541,15 @@ main() {
             
             execute_sleep
             
+            # Post wake-up status
+            SLEEP_STATUS="awake"
+            publish_mqtt_sensors
+            
             log_message "Sleep cycle completed, system awake"
         else
+            SLEEP_STATUS="waiting"
+            publish_mqtt_sensors
+            
             if [ "$TELEGRAM_NOTIFY_STANDBY" = "true" ]; then
                 send_telegram "⏳ *Timer continues*
 ✅ All array disks in standby for $standby_minutes minutes
@@ -462,6 +565,10 @@ main() {
     else
         echo "$(date)" > "$ACTIVITY_CHECK_FILE"
         log_message "First execution - standby timer started"
+        
+        SLEEP_STATUS="timer_started"
+        SLEEP_TIMER_MINUTES=$IDLE_TIME_MINUTES
+        publish_mqtt_sensors
         
         if [ "$TELEGRAM_NOTIFY_STANDBY" = "true" ]; then
             send_telegram "⏳ *Standby timer started*

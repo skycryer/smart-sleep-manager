@@ -75,10 +75,6 @@ if (empty($array_disks)) {
 // This allows users to select any disk for monitoring or ignoring
 $all_available_disks = $all_disks;
 
-// Debug: Let's see what we have in config
-// error_log("DEBUG: array_disks config = " . ($cfg['array_disks'] ?? 'not set'));
-// error_log("DEBUG: ignore_disks config = " . ($cfg['ignore_disks'] ?? 'not set'));
-
 // Convert config strings to arrays for easier checking
 $selected_monitor_disks = [];
 
@@ -118,218 +114,13 @@ function validateForm(form) {
     }
     
     // Validate network threshold
-    var threshold = parseInt(form.network_threshold.value);
-    if (isNaN(threshold) || threshold < 0) {
-        alert('Network threshold must be a positive number');
+    var networkThreshold = parseInt(form.network_threshold.value);
+    if (isNaN(networkThreshold) || networkThreshold < 0) {
+        alert('Network threshold must be 0 or greater');
         return false;
     }
     
-    // Prepare monitor disks selection
-    var monitorDisks = [];
-    for (var i=0; item=form.monitor_disks.options[i]; i++) {
-        if (item.selected) {
-            monitorDisks.push(item.value);
-        }
-    }
-    form.monitor_disks_list.value = monitorDisks.join(' ');
-    
     return true;
-}
-
-function testSystem() {
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', '/plugins/smart.sleep.manager/include/debug_system.php', true);
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4) {
-            console.log('System Debug Status:', xhr.status);
-            console.log('System Debug Response:', xhr.responseText);
-            if (xhr.status === 200) {
-                try {
-                    var response = JSON.parse(xhr.responseText);
-                    if (response.success) {
-                        console.log('Debug Info:', response.debug_info);
-                        alert('✅ System Debug successful!\n\nCheck browser console (F12) for detailed information.\n\nPHP Version: ' + response.debug_info.php_version + '\nPlugin Dir: ' + (response.debug_info.plugin_dir_exists ? 'EXISTS' : 'MISSING'));
-                    } else {
-                        alert('❌ System Debug failed: ' + response.error);
-                    }
-                } catch (e) {
-                    alert('❌ System Debug failed: Invalid JSON\n\nResponse: ' + xhr.responseText.substring(0, 500));
-                }
-            } else {
-                alert('❌ System Debug failed: HTTP ' + xhr.status + '\n\nThis means PHP is not running or the file is not accessible.');
-            }
-        }
-    };
-    xhr.send();
-}
-
-function testPHP() {
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', '/plugins/smart.sleep.manager/include/test_basic.php', true);
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4) {
-            console.log('PHP Test Status:', xhr.status);
-            console.log('PHP Test Response:', xhr.responseText);
-            if (xhr.status === 200) {
-                try {
-                    var response = JSON.parse(xhr.responseText);
-                    alert('✅ PHP Test successful!\nPHP Version: ' + response.php_version + '\nTime: ' + response.timestamp);
-                } catch (e) {
-                    alert('❌ PHP Test failed: Invalid JSON\n\nResponse: ' + xhr.responseText.substring(0, 200));
-                }
-            } else {
-                alert('❌ PHP Test failed: HTTP ' + xhr.status);
-            }
-        }
-    };
-    xhr.send();
-}
-
-function testSimple() {
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', '/plugins/smart.sleep.manager/include/test_simple.php', true);
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4) {
-            console.log('Simple Test Status:', xhr.status);
-            console.log('Simple Test Response:', xhr.responseText);
-            console.log('Simple Test Response Length:', xhr.responseText.length);
-            if (xhr.status === 200) {
-                if (xhr.responseText.length > 0) {
-                    try {
-                        var response = JSON.parse(xhr.responseText);
-                        alert('✅ Simple Test successful!\nTest: ' + response.test + '\nTime: ' + response.time);
-                    } catch (e) {
-                        alert('❌ Simple Test failed: Invalid JSON\n\nResponse: "' + xhr.responseText + '"');
-                    }
-                } else {
-                    alert('❌ Simple Test failed: Empty response!');
-                }
-            } else {
-                alert('❌ Simple Test failed: HTTP ' + xhr.status);
-            }
-        }
-    };
-    xhr.send();
-}
-
-function testTelegramMinimal(form) {
-    if (!form.telegram_bot_token.value || !form.telegram_chat_id.value) {
-        alert('Please enter both Bot Token and Chat ID to test Telegram Minimal');
-        return;
-    }
-    
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', '/plugins/smart.sleep.manager/include/test_telegram_minimal.php', true);
-    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4) {
-            console.log('Telegram Minimal Status:', xhr.status);
-            console.log('Telegram Minimal Response:', xhr.responseText);
-            console.log('Telegram Minimal Response Length:', xhr.responseText.length);
-            if (xhr.status === 200) {
-                if (xhr.responseText.length > 0) {
-                    try {
-                        var response = JSON.parse(xhr.responseText);
-                        if (response.success) {
-                            alert('✅ Telegram Minimal Test successful!\nMessage: ' + response.message + '\nBot Token: ' + response.received_bot_token + '\nChat ID: ' + response.received_chat_id);
-                        } else {
-                            alert('❌ Telegram Minimal Test failed: ' + response.message);
-                        }
-                    } catch (e) {
-                        alert('❌ Telegram Minimal Test failed: Invalid JSON\n\nResponse: "' + xhr.responseText + '"');
-                    }
-                } else {
-                    alert('❌ Telegram Minimal Test failed: Empty response!');
-                }
-            } else {
-                alert('❌ Telegram Minimal Test failed: HTTP ' + xhr.status);
-            }
-        }
-    };
-    xhr.send('bot_token=' + encodeURIComponent(form.telegram_bot_token.value) + 
-             '&chat_id=' + encodeURIComponent(form.telegram_chat_id.value));
-}
-
-function testTelegramCurl(form) {
-    if (!form.telegram_bot_token.value || !form.telegram_chat_id.value) {
-        alert('Please enter both Bot Token and Chat ID to test Telegram cURL');
-        return;
-    }
-    
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', '/plugins/smart.sleep.manager/include/test_telegram_curl.php', true);
-    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4) {
-            console.log('Telegram cURL Status:', xhr.status);
-            console.log('Telegram cURL Response:', xhr.responseText);
-            console.log('Telegram cURL Response Length:', xhr.responseText.length);
-            if (xhr.status === 200) {
-                if (xhr.responseText.length > 0) {
-                    try {
-                        var response = JSON.parse(xhr.responseText);
-                        if (response.success) {
-                            alert('✅ Telegram cURL Test successful!\n' + response.message);
-                        } else {
-                            alert('❌ Telegram cURL Test failed: ' + response.message);
-                        }
-                    } catch (e) {
-                        alert('❌ Telegram cURL Test failed: Invalid JSON\n\nResponse: "' + xhr.responseText + '"');
-                    }
-                } else {
-                    alert('❌ Telegram cURL Test failed: Empty response!');
-                }
-            } else {
-                alert('❌ Telegram cURL Test failed: HTTP ' + xhr.status);
-            }
-        }
-    };
-    xhr.send('bot_token=' + encodeURIComponent(form.telegram_bot_token.value) + 
-             '&chat_id=' + encodeURIComponent(form.telegram_chat_id.value));
-}
-
-function testTelegram(form) {
-    if (!form.telegram_bot_token.value || !form.telegram_chat_id.value) {
-        alert('Please enter both Bot Token and Chat ID to test Telegram');
-        return;
-    }
-    
-    // Show loading message
-    var button = document.querySelector('input[value="Test Telegram"]');
-    var originalValue = button.value;
-    button.value = 'Sending...';
-    button.disabled = true;
-    
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', '/plugins/smart.sleep.manager/include/test_telegram.php', true);
-    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4) {
-            // Reset button
-            button.value = originalValue;
-            button.disabled = false;
-            
-            if (xhr.status === 200) {
-                console.log('Raw response:', xhr.responseText);
-                try {
-                    var response = JSON.parse(xhr.responseText);
-                    if (response.success) {
-                        alert('✅ Telegram test successful! Message sent.');
-                    } else {
-                        alert('❌ Telegram test failed: ' + response.error);
-                    }
-                } catch (e) {
-                    console.error('JSON parse error:', e);
-                    console.error('Response text:', xhr.responseText);
-                    alert('❌ Telegram test failed: Invalid response from server\n\nResponse: ' + xhr.responseText.substring(0, 200));
-                }
-            } else {
-                alert('❌ Network error during Telegram test (HTTP ' + xhr.status + ')');
-            }
-        }
-    };
-    xhr.send('bot_token=' + encodeURIComponent(form.telegram_bot_token.value) + 
-             '&chat_id=' + encodeURIComponent(form.telegram_chat_id.value));
 }
 
 function runSleepCheck() {
@@ -418,34 +209,30 @@ $(function() {
 });
 </script>
 
-<form markdown="1" name="smart_sleep_settings" method="POST" action="/update.php" target="progressFrame" onsubmit="return validateForm(this)">
-<input type="hidden" name="#file" value="<?=$plugin?>/<?=$plugin?>.cfg">
-<input type="hidden" name="#include" value="plugins/<?=$plugin?>/include/update.sleep.php">
-<input type="hidden" name="monitor_disks_list" value="">
+<form markdown="1" name="smart_sleep_settings" method="POST" action="/update.php" target="progressFrame" onsubmit="return validateForm(this);">
+<input type="hidden" name="#file" value="smart.sleep.manager/include/update.sleep.php">
+<input type="hidden" name="#include" value="file">
 
-<div style="width: 100%; margin-bottom: 20px;">
-    <h2>🌙 Smart Sleep Manager Configuration</h2>
-    <p>Automated sleep management for your Unraid server with intelligent monitoring and Telegram notifications.</p>
-</div>
+# Smart Sleep Manager Configuration
 
-## ⚙️ Basic Settings
+## 🔧 Basic Settings
 
-_(Enable Smart Sleep)_:
+_(Enable Smart Sleep Manager)_:
 : <select name="enabled">
   <?=mk_option($cfg['enabled'], "true", "Enabled")?>
   <?=mk_option($cfg['enabled'], "false", "Disabled")?>
   </select>
 
-> Enable or disable the Smart Sleep Manager. When disabled, the cron job will not perform any sleep checks.
+> Enable or disable automatic sleep management.
 
-_(Idle Time Before Sleep)_ (minutes):
+_(Idle Time)_ (minutes):
 : <input type="number" name="idle_time_minutes" min="1" max="1440" value="<?=$cfg['idle_time_minutes']?:15?>" class="narrow">
 
-> Time in minutes that all conditions must be met before the system goes to sleep. Default: 15 minutes.
+> Minutes to wait after all disks are in standby before putting the server to sleep.
 
 _(Sleep Method)_:
 : <select name="sleep_method">
-  <?=mk_option($cfg['sleep_method'], "dynamix_s3", "Dynamix S3 Sleep (Recommended)")?>
+  <?=mk_option($cfg['sleep_method'], "dynamix_s3", "Dynamix S3 Sleep")?>
   <?=mk_option($cfg['sleep_method'], "systemctl_suspend", "systemctl suspend")?>
   </select>
 
@@ -506,36 +293,6 @@ _(Chat ID)_:
 
 > Your Telegram Chat ID. Send a message to your bot, then visit: https://api.telegram.org/botTOKEN/getUpdates
 
-_(System Debug)_:
-: <input type="button" value="System Debug" onclick="testSystem()">
-
-> Comprehensive system analysis to diagnose Unraid issues. Check browser console (F12) for detailed output.
-
-_(Test PHP)_:
-: <input type="button" value="Test PHP" onclick="testPHP()">
-
-> Test basic PHP functionality first before testing Telegram.
-
-_(Test Simple)_:
-: <input type="button" value="Test Simple" onclick="testSimple()">
-
-> Ultra-simple test to check basic PHP response handling.
-
-_(Test Telegram Minimal)_:
-: <input type="button" value="Test Telegram Minimal" onclick="testTelegramMinimal(this.form)">
-
-> Minimal test to check if Telegram script can receive POST data.
-
-_(Test Telegram cURL)_:
-: <input type="button" value="Test Telegram cURL" onclick="testTelegramCurl(this.form)">
-
-> Test Telegram using cURL (like sleepy.sh script) instead of file_get_contents.
-
-_(Test Telegram)_:
-: <input type="button" value="Test Telegram" onclick="testTelegram(this.form)">
-
-> Send a test message to verify Telegram configuration.
-
 ### 🔔 Notification Types
 
 _(Notify on Standby Timer Start)_:
@@ -556,9 +313,62 @@ _(Notify on Sleep Blocked)_:
   <?=mk_option($cfg['telegram_notify_blocked'], "true", "Enabled")?>
   </select>
 
-> Warning: Sleep blocked notifications can be frequent and may spam your Telegram.
+> Note: Telegram notifications will be logged to the log file. Actual sending requires the sleepy.sh script or manual implementation.
 
-## 🔧 Advanced Settings
+## � MQTT Monitoring
+
+_(Enable MQTT)_:
+: <select name="mqtt_enabled">
+  <?=mk_option($cfg['mqtt_enabled'], "true", "Enabled")?>
+  <?=mk_option($cfg['mqtt_enabled'], "false", "Disabled")?>
+  </select>
+
+> Enable MQTT publishing of sleep status and system sensors. Perfect for Home Assistant integration.
+
+_(MQTT Host)_:
+: <input type="text" name="mqtt_host" value="<?=$cfg['mqtt_host']?>" placeholder="192.168.1.100" style="width: 200px;">
+
+> MQTT broker hostname or IP address.
+
+_(MQTT Port)_:
+: <input type="number" name="mqtt_port" min="1" max="65535" value="<?=$cfg['mqtt_port']?:1883?>" class="narrow">
+
+> MQTT broker port. Default: 1883 (standard MQTT), 8883 (MQTT over TLS).
+
+_(MQTT Username)_:
+: <input type="text" name="mqtt_username" value="<?=$cfg['mqtt_username']?>" placeholder="optional" style="width: 200px;">
+
+> MQTT username (leave empty if no authentication required).
+
+_(MQTT Password)_:
+: <input type="password" name="mqtt_password" value="<?=$cfg['mqtt_password']?>" placeholder="optional" style="width: 200px;">
+
+> MQTT password (leave empty if no authentication required).
+
+_(MQTT Topic Prefix)_:
+: <input type="text" name="mqtt_topic_prefix" value="<?=$cfg['mqtt_topic_prefix']?:'unraid/smart-sleep'?>" style="width: 300px;">
+
+> Topic prefix for all MQTT messages. Default: unraid/smart-sleep
+
+_(Retain Messages)_:
+: <select name="mqtt_retain">
+  <?=mk_option($cfg['mqtt_retain'], "true", "Enabled")?>
+  <?=mk_option($cfg['mqtt_retain'], "false", "Disabled")?>
+  </select>
+
+> Retain MQTT messages so last values are available after broker restart.
+
+### 📈 MQTT Sensors Published
+
+> The following sensors are published to MQTT on each sleep check:
+> - `{prefix}/status` - Current sleep manager status (standby/waiting/sleeping/blocked)
+> - `{prefix}/uptime` - System uptime in seconds  
+> - `{prefix}/network_rate` - Current network traffic in bytes/second
+> - `{prefix}/active_disks` - Number of active (non-standby) disks
+> - `{prefix}/sleep_timer` - Minutes until sleep possible
+> - `{prefix}/last_check` - Timestamp of last check
+
+## �🔧 Advanced Settings
 
 _(Wake-on-LAN Options)_:
 : <input type="text" name="wol_options" value="<?=$cfg['wol_options']?:'g'?>" class="narrow" placeholder="g">

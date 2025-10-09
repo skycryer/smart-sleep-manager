@@ -3,7 +3,7 @@
 <!ENTITY name "smart.sleep.manager">
 <!ENTITY displayname "Smart Sleep Manager">
 <!ENTITY author "SkyCryer">
-<!ENTITY version "2025.10.09.22">
+<!ENTITY version "2025.10.09.25">
 <!ENTITY launch "Settings/SmartSleepSettings">
 <!ENTITY gitURL "https://github.com/skycryer/smart-sleep-manager/raw/main">
 <!ENTITY pluginURL "&gitURL;/smart.sleep.manager.plg">
@@ -15,91 +15,50 @@
 PLUGIN DESCRIPTION
 Smart Sleep Manager
 
-Automated sleep management for your Unraid server with intelligent monitoring and Telegram notifications. Monitors disk activity and network traffic to determine when it's safe to put the server to sleep. Includes configurable idle timers, disk monitoring, and Wake-on-LAN support for seamless operation.
+Automated sleep management for your Unraid server with intelligent monitoring and notifications. Monitors disk activity and network traffic to determine when it's safe to put the server to sleep. Includes configurable idle timers, disk monitoring, MQTT sensors for Home Assistant, and Wake-on-LAN support for seamless operation.
 
 Features:
 • Intelligent disk activity monitoring
-• Network traffic monitoring
+• Network traffic monitoring  
+• MQTT sensor publishing for Home Assistant integration
 • Telegram notifications for sleep events
 • Wake-on-LAN support with automatic configuration
 • Configurable idle timers and thresholds
 • Compatible with Dynamix S3 sleep
 • Web-based configuration interface
+
+MQTT Sensors:
+• unraid/smart-sleep/status - Current status (standby/waiting/sleeping/blocked)
+• unraid/smart-sleep/uptime - System uptime in seconds
+• unraid/smart-sleep/network_rate - Network traffic in bytes/second  
+• unraid/smart-sleep/active_disks - Number of active disks
+• unraid/smart-sleep/sleep_timer - Minutes until sleep possible
+• unraid/smart-sleep/state - Combined JSON state for Home Assistant
 -->
 
 <CHANGES>
-###2025.10.09.22
-- Added cURL-based telegram test matching working sleepy.sh approach
-- Created test_telegram_curl.php using cURL instead of file_get_contents
-- Added "Test Telegram cURL" button to isolate HTTP method differences
-- May resolve SSL/TLS, User-Agent, or firewall issues with file_get_contents
-- Provides comprehensive debugging: minimal POST, cURL, and original methods
+###2025.10.09.25
+- Added MQTT support for real-time monitoring
+- MQTT status updates sent on every sleep check cycle
+- Configurable MQTT broker, username/password authentication
+- Home Assistant integration friendly with JSON sensor data
+- Additional sensors: uptime, network rate, active disks
+- Backward compatible with existing Telegram notifications
 
-###2025.10.09.21
-- Added minimal telegram test for debugging empty response issue
-- Created test_telegram_minimal.php to isolate POST data handling
-- Added "Test Telegram Minimal" button for step-by-step debugging
-- Enhanced debugging capabilities to identify telegram test failures
-- All basic tests (System Debug, PHP Test, Simple Test) confirmed working
-
-###2025.10.09.20
-- Fixed plugin display name showing as 'Smart Sleep Manager' instead of internal ID
-- Improved plugin description formatting for better visibility in plugin manager
-- Enhanced XML structure with proper commenting for description
-- Added comprehensive feature list in plugin description
-
-###2025.10.09.19  
-- Fixed disk selection not showing all pre-selected disks
-- Enhanced default.cfg with monitor_disks field for proper initialization
-- Improved backwards compatibility logic for config migration
-- Auto-select array disks on first-time setup for better user experience
-- Added comprehensive debug logging for disk selection troubleshooting
-- Created test_simple.php for ultra-basic PHP response validation
-- Added "Test Simple" button to isolate telegram JSON response issues
-
-###2025.10.09.18
-- Restored dropdownchecklist plugin functionality with checkbox interface
-- Fixed disk selection dropdown with proper pre-selection and count display  
-- Enhanced fallback support for systems without dropdownchecklist plugin
-- Completely rewrote test_telegram.php with clean output buffer management
-- Fixed JSON response formatting and POST data handling
-- Added comprehensive input validation and better error messages
-
-###2025.10.09.17
-- Fixed disk monitoring dropdown: Changed to monitor_disks[] for proper multi-select
-- Fixed Telegram test empty response: Cleaned output buffer management
-- Simplified JavaScript dropdown without external plugin dependencies
-- Enhanced multi-select UI with selected disk count display
-- Updated configuration handling for array inputs
-
-###2025.10.09.16
-- Fixed gitignore patterns blocking debug_system.php deployment
-- Restored comprehensive debug tools for troubleshooting
-- Refined gitignore to exclude only output/temp files, not essential tools
-
-###2025.10.09.12
-- Final fix: Removed duplicate content from .plg file
-- Cleaned XML structure completely
-- Ready for stable installation
-
-###2025.10.09.11
-- Emergency fix: Repaired corrupted .plg file
-- Fixed test_basic.php download URL issue  
-- Cleaned XML structure from text contamination
-
-###2025.10.09.10
-- Updated author to SkyCryer
-- Enhanced Telegram test debugging
-- Added comprehensive error logging
-- Improved plugin description and display name
+###2025.10.09.24
+- Production ready release with streamlined interface
+- Cleaned up testing code and simplified configuration UI
+- Essential sleep management functionality only
+- Improved documentation and user experience
 
 ###2025.10.09
-- Major UI simplification: Single "Disks to Monitor" dropdown
-- Removed confusing "Array Disks" + "Ignore Disks" split
-- Enhanced dropdown selection logic with proper pre-selection
-- Backward compatibility with existing configs
-- Fixed JavaScript structure and validation
-- Improved Telegram test error handling
+- Initial release with intelligent sleep management
+- Array disk activity monitoring with configurable standby detection
+- Network traffic monitoring with customizable thresholds  
+- Telegram notification support for sleep events
+- Wake-on-LAN configuration and post-wake Samba restart
+- Compatible with Dynamix S3 sleep
+- Web-based configuration interface with disk selection
 </CHANGES>
 
 <FILE Run="/bin/bash">
@@ -133,26 +92,6 @@ echo "Plugin directories created"
 
 <FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/include/SleepMode.php">
 <URL>&gitURL;/include/SleepMode.php</URL>
-</FILE>
-
-<FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/include/test_telegram.php">
-<URL>&gitURL;/include/test_telegram.php</URL>
-</FILE>
-
-<FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/include/test_telegram_minimal.php">
-<URL>&gitURL;/include/test_telegram_minimal.php</URL>
-</FILE>
-
-<FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/include/test_telegram_curl.php">
-<URL>&gitURL;/include/test_telegram_curl.php</URL>
-</FILE>
-
-<FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/include/test_basic.php">
-<URL>&gitURL;/include/test_basic.php</URL>
-</FILE>
-
-<FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/include/test_simple.php">
-<URL>&gitURL;/include/test_simple.php</URL>
 </FILE>
 
 <FILE Name="/usr/local/emhttp/plugins/smart.sleep.manager/include/debug_system.php">
