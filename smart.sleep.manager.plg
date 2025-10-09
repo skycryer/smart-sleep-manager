@@ -3,7 +3,7 @@
 <!ENTITY name "smart.sleep.manager">
 <!ENTITY displayname "Smart Sleep Manager">
 <!ENTITY author "SkyCryer">
-<!ENTITY version "2025.10.09.31">
+<!ENTITY version "2025.10.09.32">
 <!ENTITY launch "Settings/SmartSleepSettings">
 <!ENTITY gitURL "https://github.com/skycryer/smart-sleep-manager/raw/main">
 <!ENTITY pluginURL "&gitURL;/smart.sleep.manager.plg">
@@ -18,25 +18,32 @@ Smart Sleep Manager
 Automated sleep management for your Unraid server with intelligent monitoring and notifications. Monitors disk activity and network traffic to determine when it's safe to put the server to sleep. Includes configurable idle timers, disk monitoring, MQTT sensors for Home Assistant, and Wake-on-LAN support for seamless operation.
 
 Features:
-• Intelligent disk activity monitoring
-• Network traffic monitoring  
-• MQTT sensor publishing for Home Assistant integration
-• Telegram notifications for sleep events
-• Wake-on-LAN support with automatic configuration
-• Configurable idle timers and thresholds
-• Compatible with Dynamix S3 sleep
-• Web-based configuration interface
+- Intelligent disk activity monitoring
+- Network traffic monitoring  
+- MQTT sensor publishing for Home Assistant integration
+- Telegram notifications for sleep events
+- Wake-on-LAN support with automatic configuration
+- Configurable idle timers and thresholds
+- Compatible with Dynamix S3 sleep
+- Web-based configuration interface
 
 MQTT Sensors:
-• unraid/smart-sleep/status - Current status (standby/waiting/sleeping/blocked)
-• unraid/smart-sleep/uptime - System uptime in seconds
-• unraid/smart-sleep/network_rate - Network traffic in bytes/second  
-• unraid/smart-sleep/active_disks - Number of active disks
-• unraid/smart-sleep/sleep_timer - Minutes until sleep possible
-• unraid/smart-sleep/state - Combined JSON state for Home Assistant
+- unraid/smart-sleep/status - Current status (standby/waiting/sleeping/blocked)
+- unraid/smart-sleep/uptime - System uptime in seconds
+- unraid/smart-sleep/network_rate - Network traffic in bytes/second  
+- unraid/smart-sleep/active_disks - Number of active disks
+- unraid/smart-sleep/sleep_timer - Minutes until sleep possible
+- unraid/smart-sleep/state - Combined JSON state for Home Assistant
 -->
 
 <CHANGES>
+###2025.10.09.32
+- CRITICAL FIX: Resolved XML parse errors that prevented installation
+- Fixed unescaped ampersand characters in shell commands (&amp; → &amp;amp;)
+- Fixed bullet points that caused XML parsing issues (• → -)
+- Plugin installation should now work without XML parse errors
+- All mosquitto auto-installation features preserved
+
 ###2025.10.09.31
 - Added automatic mosquitto-clients installation during plugin setup
 - Tries slackpkg first, then manual download as fallback
@@ -114,17 +121,17 @@ mkdir -p /usr/local/emhttp/plugins/smart.sleep.manager/images
 mkdir -p /boot/config/plugins/smart.sleep.manager
 
 # Install mosquitto-clients for MQTT support if not already installed
-if ! command -v mosquitto_pub >/dev/null 2>&1; then
+if ! command -v mosquitto_pub &gt;/dev/null 2&gt;&amp;1; then
     echo "Installing mosquitto-clients for MQTT support..."
     
     # Try automatic installation
-    if command -v slackpkg >/dev/null 2>&1; then
+    if command -v slackpkg &gt;/dev/null 2&gt;&amp;1; then
         echo "Attempting to install mosquitto via slackpkg..."
-        slackpkg -batch=on -default_answer=y install mosquitto 2>/dev/null || {
+        slackpkg -batch=on -default_answer=y install mosquitto 2&gt;/dev/null || {
             echo "slackpkg install failed, trying manual download..."
             cd /tmp
-            wget -q https://slackware.uk/slackware/slackware64-15.0/slackware64/n/mosquitto-2.0.15-x86_64-1.txz 2>/dev/null && {
-                installpkg mosquitto-2.0.15-x86_64-1.txz 2>/dev/null
+            wget -q https://slackware.uk/slackware/slackware64-15.0/slackware64/n/mosquitto-2.0.15-x86_64-1.txz 2&gt;/dev/null &amp;&amp; {
+                installpkg mosquitto-2.0.15-x86_64-1.txz 2&gt;/dev/null
                 rm -f mosquitto-2.0.15-x86_64-1.txz
             } || {
                 echo "WARNING: Could not install mosquitto-clients automatically."
@@ -139,7 +146,7 @@ if ! command -v mosquitto_pub >/dev/null 2>&1; then
     fi
     
     # Check if installation was successful
-    if command -v mosquitto_pub >/dev/null 2>&1; then
+    if command -v mosquitto_pub &gt;/dev/null 2&gt;&amp;1; then
         echo "SUCCESS: mosquitto-clients installed successfully!"
     fi
 fi
@@ -195,13 +202,13 @@ if [ ! -f /boot/config/plugins/smart.sleep.manager/smart.sleep.manager.cfg ]; th
   cp /usr/local/emhttp/plugins/smart.sleep.manager/default.cfg /boot/config/plugins/smart.sleep.manager/smart.sleep.manager.cfg
   echo "Default configuration copied"
 fi
-chmod +x /usr/local/emhttp/plugins/smart.sleep.manager/scripts/smart_sleep.sh 2>/dev/null
-chmod +x /usr/local/emhttp/plugins/smart.sleep.manager/scripts/preRun 2>/dev/null
-chmod +x /usr/local/emhttp/plugins/smart.sleep.manager/scripts/postRun 2>/dev/null
+chmod +x /usr/local/emhttp/plugins/smart.sleep.manager/scripts/smart_sleep.sh 2&gt;/dev/null
+chmod +x /usr/local/emhttp/plugins/smart.sleep.manager/scripts/preRun 2&gt;/dev/null
+chmod +x /usr/local/emhttp/plugins/smart.sleep.manager/scripts/postRun 2&gt;/dev/null
 echo "Permissions set"
-CRONLINE="*/5 * * * * /usr/local/emhttp/plugins/smart.sleep.manager/scripts/smart_sleep.sh >/dev/null"
-if ! crontab -l 2>/dev/null | grep -q "smart_sleep.sh"; then
-  (crontab -l 2>/dev/null; echo "$CRONLINE") | crontab -
+CRONLINE="*/5 * * * * /usr/local/emhttp/plugins/smart.sleep.manager/scripts/smart_sleep.sh &gt;/dev/null"
+if ! crontab -l 2&gt;/dev/null | grep -q "smart_sleep.sh"; then
+  (crontab -l 2&gt;/dev/null; echo "$CRONLINE") | crontab -
   echo "Cron job installed"
 fi
 echo "Smart Sleep Manager installed successfully!"
@@ -211,7 +218,7 @@ echo "Smart Sleep Manager installed successfully!"
 <FILE Run="/bin/bash" Method="remove">
 <INLINE>
 echo "Removing Smart Sleep Manager..."
-crontab -l 2>/dev/null | grep -v "smart_sleep.sh" | crontab - 2>/dev/null
+crontab -l 2&gt;/dev/null | grep -v "smart_sleep.sh" | crontab - 2&gt;/dev/null
 rm -rf /usr/local/emhttp/plugins/smart.sleep.manager
 echo "Smart Sleep Manager removed successfully!"
 </INLINE>
